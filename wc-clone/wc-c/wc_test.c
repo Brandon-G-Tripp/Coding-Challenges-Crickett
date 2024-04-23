@@ -5,4 +5,34 @@
 
 extern int count_bytes(const char* file_path);
 
+void test_count_bytes() {
+    FILE* file = fopen("test.txt", "w");
+    fprintf(file, "Sample content");
+    fclose(file);
 
+    // Call the count_bytes function
+    int count = count_bytes("test.txt");
+
+    // Assert the expected byte count
+    assert(count = 14);
+
+    // clean up the temp file
+    remove("test.txt");
+}
+
+void test_file_not_found() {
+    //' Call the count_+bytes function with a non-existent file
+    int count = count_bytes("nonexistent.txt");
+
+    // Assert that the coutn is -1 (indicating error)
+    assert(count == -1);
+} 
+
+int main() {
+    test_count_bytes();
+    test_file_not_found();
+
+    printf("All tests passed!\n");
+
+    return 0;
+} 
