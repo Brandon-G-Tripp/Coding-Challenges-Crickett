@@ -1,5 +1,6 @@
-const fs = require('fs');
-const yargs = require('yargs');
+import fs from "node:fs";
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 
 function countBytes(filePath) {
     try {
@@ -13,11 +14,31 @@ function countBytes(filePath) {
     } 
 } 
 
-const argv = yargs 
+function countLines(filePath) {
+    try {
+        const data = fs.readFileSync(filePath, 'utf8');
+        const lines = data.split('\n');
+        return lines.length;
+    } catch(error) {
+        if (error.code === 'ENOENT') {
+            return null;
+        } 
+        throw error;
+    } 
+}
+
+
+const argv = yargs(hideBin(process.argv))
+    .scriptName('wc')
     .usage('Usage: $0 [options] <file>')
     .option('c', {
         alias: 'bytes',
         describe: 'Count bytes',
+        type: 'boolean',
+    })
+    .option('l', {
+        alias: 'lines',
+        describe: 'Count lines',
         type: 'boolean',
     })
     .demandCommand(1, 'Please provide a file')
@@ -34,12 +55,20 @@ if (argv.bytes) {
         process.exit(1);
     } 
     console.log(`${count} ${filePath}`);
+} else if (argv.lines) {
+    const count = countLines(filePath);
+    if (count === null) {
+        console.error(`Error: Could not open file '${filePath}'`);
+        process.exit(1);
+    }
+    console.log(`${count} ${filePath}`);
 } else {
-    console.error('Error: Missing -c flag');
+    console.error('Error: Missing -c or -l flag');
     process.exit(1);
 } 
 
 
-module.exports = {
+export {
     countBytes,
+    countLines,
 }; 

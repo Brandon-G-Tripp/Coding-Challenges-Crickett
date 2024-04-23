@@ -1,13 +1,21 @@
-const fs = require('fs');
+import fs from 'node:fs';
 
-const { countBytes } = require('./wc');
+import { countBytes, countLines } from './wc.js';
 
 describe('countBytes', () => {
     afterEach(() => {
         // clean up the temp file after each test
-        if (fs.existsSync('test.txt')) {
-            fs.unlinkSync('test.txt');
+        if (existsSync('test.txt')) {
+            unlinkSync('test.txt');
         } 
+    });
+
+    test('counts the number of lines in a file', () => {
+        fs.writeFileSync('test.txt', 'Line 1\nLine 2\nLine 3\n');
+
+        const count = countLines('test.txt');
+
+        expect(count).toBe(3);
     });
 
     test('counts the number of bytes in a file', () => {
