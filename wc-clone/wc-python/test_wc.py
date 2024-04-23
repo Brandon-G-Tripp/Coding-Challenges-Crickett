@@ -24,5 +24,17 @@ class TestCountBytes(unittest.TestCase):
         # Assert that the count is None (indicating an error)
         self.assertIsNone(count)
 
+    def test_count_lines(self):
+        with open("test.txt", "w") as file:
+            file.write("Line 1\nLine 2\nLine 3\n")
+
+        count = count_lines("test.txt")
+
+        self.assertEqual(count, 3)
+
+        os.remove("test.txt")
+
+
+
 if __name__ == "__main__":
     unittest.main()
