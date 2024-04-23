@@ -4,6 +4,7 @@
 #include <assert.h>
 
 extern int count_bytes(const char* file_path);
+extern int count_lines(const char* file_path);
 
 void test_count_bytes() {
     FILE* file = fopen("test.txt", "w");
@@ -28,9 +29,22 @@ void test_file_not_found() {
     assert(count == -1);
 } 
 
+void test_count_lines() {
+    FILE* file = fopen("test.txt", "w");
+    fprintf(file, "Line 1\nLine 2\nLine 3\n");
+    fclose(file);
+
+    int count = count_lines("test.txt");
+
+    assert(count == 3);
+
+    remove("test.txt");
+}
+
 int main() {
     test_count_bytes();
     test_file_not_found();
+    test_count_lines();
 
     printf("All tests passed!\n");
 
