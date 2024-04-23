@@ -1,12 +1,15 @@
 use clap::Parser;
 use std::fs::File;
-use std::io::Read;
+use std::io::{BufRead, BufReader, Read};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
     #[arg(short = 'c', long = "bytes")]
     count_bytes: bool, 
+
+    #[arg(short = 'l', long = "lines")]
+    count_lines: bool,
 
     #[arg(required = true)]
     file: String,
@@ -29,10 +32,30 @@ fn main() {
                 std::process::exit(1);
             } 
         } 
-    } else {
-        eprintln!("Error: Missing -c flag");
+    } 
+
+    // count the number of lines in the file
+    if args.count_lines {
+        match count_lines(file_path) {
+            Ok(count) => println!("{} {}", count, file_path),
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            } 
+        } 
+    } 
+
+    if !args.count_bytes && !args.count_lines {
+        eprintln!("Error: Missing -c or -l flag");
         std::process::exit(1);
     } 
+}
+
+fn count_lines(file_path: &str) -> Result<usize, std::io::Error> {
+    let file = File::open(file_path)?;
+    let reader = BufReader::new(file);
+    let line_count = reader.lines().filter(|line| line.is_ok()).count();
+    Ok(line_count)
 }
 
 fn count_bytes(file_path: &str) -> Result<usize, std::io::Error> {
@@ -47,23 +70,34 @@ mod tests {
     use super::*;
     use std::fs::File;
     use std::io::Write;
-    use std::path::PathBuf;
 
     #[test]
     fn test_count_bytes() {
         // Create a temporary file with sample content
-        let mut file = File::create("test.txt").unwrap();
+        let mut file = File::create("test_count_bytes.txt").unwrap();
         file.write_all(b"Sample content").unwrap();
 
         // Call the count_bytes function
-        let count = count_bytes("test.txt").unwrap();
+        let count = count_bytes("test_count_bytes.txt").unwrap();
 
         // Assert the expected byte count
         assert_eq!(count, 14);
 
         // clean up the temp file
-        std::fs::remove_file("test.txt").unwrap();
+        std::fs::remove_file("test_count_bytes.txt").unwrap();
     } 
+
+    #[test]
+    fn test_count_lines() {
+        let mut file = File::create("test_count_lines.txt").unwrap();
+        file.write_all(b"Line 1\nLine 2\nLine 3").unwrap();
+
+        let count = count_lines("test_count_lines.txt").unwrap();
+
+        assert_eq!(count, 3);
+
+        std::fs::remove_file("test_count_lines.txt").unwrap();
+    }
 
     #[test]
     fn test_file_not_found() {
