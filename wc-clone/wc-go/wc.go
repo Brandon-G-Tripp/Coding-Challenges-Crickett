@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -15,8 +16,24 @@ func countBytes(filePath string) (int, error) {
     return len(data), nil
 } 
 
+func countLines(filePath string) (int, error) {
+    file, err := os.Open(filePath)
+    if err != nil {
+        return 0, err
+    }
+    defer file.Close()
+
+    scanner := bufio.NewScanner(file)
+    count := 0
+    for scanner.Scan() {
+        count++
+    }
+    return count, nil
+} 
+
 func main() {
     countBytesFlag := flag.Bool("c", false, "Count bytes")
+    countLinesFlag := flag.Bool("l", false, "Count lines")
     flag.Parse()
 
     if flag.NArg() == 0 {
@@ -33,8 +50,15 @@ func main() {
             os.Exit(1)
         }
         fmt.Printf("%d %s\n", count, filePath)
+    } else if *countLinesFlag {
+        count, err := countLines(filePath)
+        if err != nil {
+            fmt.Printf("Error: Could not open file '%s'\n", filePath)
+            os.Exit(1)
+        } 
+        fmt.Printf("%d %s\n", count, filePath)
     } else {
-        fmt.Println("Error: Missing -c flag")
+        fmt.Println("Error: Missing -c or -l flag")
         os.Exit(1)
     }
 } 
