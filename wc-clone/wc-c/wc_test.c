@@ -5,6 +5,7 @@
 
 extern int count_bytes(const char* file_path);
 extern int count_lines(const char* file_path);
+extern int count_words(const char* file_path);
 
 void test_count_bytes() {
     FILE* file = fopen("test.txt", "w");
@@ -41,10 +42,23 @@ void test_count_lines() {
     remove("test.txt");
 }
 
+void test_count_words() {
+    FILE* file = fopen("test.txt", "w");
+    fprintf(file, "This is a sample file\nwith multiple words\non each line\n");
+    fclose(file);
+
+    int count = count_words("test.txt");
+
+    assert(count == 11);
+
+    remove("test.txt");
+}
+
 int main() {
     test_count_bytes();
     test_file_not_found();
     test_count_lines();
+    test_count_words();
 
     printf("All tests passed!\n");
 
