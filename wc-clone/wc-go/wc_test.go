@@ -1,9 +1,35 @@
 package main
 
 import (
-    "os"
-    "testing"
+	"os"
+	"testing"
+
 )
+
+func TestCountWords(t *testing.T) {
+    file, err := os.Create("test.txt")
+    if err != nil {
+        t.Fatalf("Failed to create temporary file: %v", err)
+    } 
+    defer file.Close()
+    defer os.Remove("test.txt")
+
+    content := "This is a sample file\nwith multiple words\non each line\n"
+    _, err = file.WriteString(content)
+    if err != nil {
+        t.Fatalf("Failed to write to temporary file: %v", err)
+    } 
+
+    count, err := countWords("test.txt")
+    if err != nil {
+        t.Fatalf("Unexpected error: %v", err)
+    } 
+
+    expectedCount := 11
+    if count != expectedCount {
+        t.Errorf("Expected word count %d, but got %d", expectedCount, count)
+    } 
+} 
 
 func TestCountLines(t *testing.T) {
     file, err := os.Create("test.txt")
