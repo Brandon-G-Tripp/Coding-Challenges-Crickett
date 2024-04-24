@@ -107,4 +107,17 @@ mod tests {
         // assert that the expected error is returned
         assert!(result.is_err());
     } 
+
+
+    #[test]
+    fn test_count_words() {
+        let mut file = File::create("test_count_words.txt").unwrap();
+        file.write_all(b"This is a sample file\n with multiple words\n on each line").unwrap();
+
+        let count = count_words("test_count_words.txt").unwrap();
+
+        assert_eq!(count, 12);
+
+        std::fs::remove_file("test_count_words.txt").unwrap();
+    } 
 } 
