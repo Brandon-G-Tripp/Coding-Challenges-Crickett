@@ -51,6 +51,17 @@ fn main() {
     } 
 }
 
+fn count_words(file_path: &str) -> Result<usize, std::io::Error> {
+    let file = File::open(file_path)?;
+    let reader = BufReader::new(file);
+    let word_count = reader
+        .lines()
+        .filter(|line| line.is_ok())
+        .map(|line| line.unwrap().split_whitespace().count())
+        .sum();
+    Ok(word_count)
+} 
+
 fn count_lines(file_path: &str) -> Result<usize, std::io::Error> {
     let file = File::open(file_path)?;
     let reader = BufReader::new(file);
