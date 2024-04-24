@@ -8,6 +8,20 @@ import (
 	"os"
 )
 
+func countChars(filePath string) (int, error) {
+    data, err := ioutil.ReadFile(filePath)
+    if err != nil {
+        return 0, err
+    } 
+
+    count := 0
+    for range string(data) {
+        count++
+    } 
+
+    return count, nil
+}
+
 func countWords(filePath string) (int, error) {
     file, err := os.Open(filePath)
     if err != nil {
@@ -51,6 +65,7 @@ func main() {
     countBytesFlag := flag.Bool("c", false, "Count bytes")
     countLinesFlag := flag.Bool("l", false, "Count lines")
     countWordsFlag := flag.Bool("w", false, "Count words")
+    countCharsFlag := flag.Bool("m", false, "Count characters")
     flag.Parse()
 
     if flag.NArg() == 0 {
@@ -60,7 +75,14 @@ func main() {
 
     filePath := flag.Arg(0)
 
-    if *countBytesFlag {
+    if *countCharsFlag {
+        count, err := countChars(filePath)
+        if err != nil {
+            fmt.Printf("Error: Could not open file '%s'\n", filePath)
+            os.Exit(1)
+        } 
+        fmt.Printf("%d %s\n", count, filePath)
+    } else if *countBytesFlag {
         count, err := countBytes(filePath)
         if err != nil {
             fmt.Printf("Error: Could not open file '%s'\n", filePath)
@@ -82,7 +104,7 @@ func main() {
         } 
         fmt.Printf("%d %s\n", count, filePath)
     } else {
-        fmt.Println("Error: Missing -c or -l, or -w flag")
+        fmt.Println("Error: Missing -c, -l, -m,  or -w flag")
         os.Exit(1)
     }
 } 

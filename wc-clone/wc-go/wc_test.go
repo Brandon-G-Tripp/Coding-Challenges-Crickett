@@ -6,6 +6,40 @@ import (
 
 )
 
+func TestCountChars(t *testing.T) {
+    file, err := os.Create("test.txt")
+    if err != nil {
+        t.Fatalf("Failed to create the temporary file: %v", err)
+    } 
+    defer file.Close()
+    defer os.Remove("test.txt")
+
+    content := "Sample content with 🚀 emoji"
+    _, err = file.WriteString(content)
+    if err != nil {
+        t.Fatalf("Failed to write to temporary file: %v", err)
+    }
+
+    charCount, err := countChars("test.txt")
+    if err != nil {
+        t.Fatalf("Unexpected error: %v", err)
+    }
+
+    byteCount, err := countBytes("test.txt")
+    if err != nil {
+        t.Fatalf("Unexpected error: %v", err)
+    }
+
+    expectedCharCount := 27
+    if charCount != expectedCharCount {
+        t.Errorf("Expected character count %d, but got %d", expectedCharCount, charCount)
+    }
+
+    if charCount == byteCount {
+        t.Error("Character count should not be equal to byte count")
+    }
+} 
+
 func TestCountWords(t *testing.T) {
     file, err := os.Create("test.txt")
     if err != nil {
