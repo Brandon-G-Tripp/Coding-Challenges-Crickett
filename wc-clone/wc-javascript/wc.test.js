@@ -1,12 +1,12 @@
 import fs from 'node:fs';
 
-import { countBytes, countLines } from './wc.js';
+import { countBytes, countWords, countLines } from './wc.js';
 
-describe('countBytes', () => {
+describe('word count functions', () => {
     afterEach(() => {
         // clean up the temp file after each test
-        if (existsSync('test.txt')) {
-            unlinkSync('test.txt');
+        if (fs.existsSync('test.txt')) {
+            fs.unlinkSync('test.txt');
         } 
     });
 
@@ -36,4 +36,12 @@ describe('countBytes', () => {
         // Assert that the count is null (indicating an error) 
         expect(count).toBeNull();
     });
+
+    test('counts the number of words in a file', () => {
+        fs.writeFileSync('test.txt', 'This is a sample file\nwith multiple words\non each line\n');
+
+        const count = countWords('test.txt');
+
+        expect(count).toBe(11);
+    }); 
 });
