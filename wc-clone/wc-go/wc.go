@@ -8,6 +8,22 @@ import (
 	"os"
 )
 
+func countWords(filePath string) (int, error) {
+    file, err := os.Open(filePath)
+    if err != nil {
+        return 0, err
+    } 
+    defer file.Close()
+
+    scanner := bufio.NewScanner(file)
+    scanner.Split(bufio.ScanWords)
+    count := 0 
+    for scanner.Scan() {
+        count++
+    } 
+    return count, nil
+} 
+
 func countBytes(filePath string) (int, error) {
     data, err := ioutil.ReadFile(filePath)
     if err != nil {
@@ -34,6 +50,7 @@ func countLines(filePath string) (int, error) {
 func main() {
     countBytesFlag := flag.Bool("c", false, "Count bytes")
     countLinesFlag := flag.Bool("l", false, "Count lines")
+    countWordsFlag := flag.Bool("w", false, "Count words")
     flag.Parse()
 
     if flag.NArg() == 0 {
@@ -57,8 +74,15 @@ func main() {
             os.Exit(1)
         } 
         fmt.Printf("%d %s\n", count, filePath)
+    } else if *countWordsFlag {
+        count, err := countWords(filePath)
+        if err != nil {
+            fmt.Printf("Error: Could not open file '%s'\n", filePath)
+            os.Exit(1)
+        } 
+        fmt.Printf("%d %s\n", count, filePath)
     } else {
-        fmt.Println("Error: Missing -c or -l flag")
+        fmt.Println("Error: Missing -c or -l, or -w flag")
         os.Exit(1)
     }
 } 
