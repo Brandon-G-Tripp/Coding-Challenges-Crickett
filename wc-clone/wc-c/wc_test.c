@@ -6,6 +6,22 @@
 extern int count_bytes(const char* file_path);
 extern int count_lines(const char* file_path);
 extern int count_words(const char* file_path);
+extern int count_chars(const char* file_path);
+
+void test_count_chars() {
+    FILE* file = fopen("test.txt", "w");
+    fprintf(file, "Sample content with 🚀 emoji");
+    fclose(file);
+
+    int char_count = count_chars("test.txt");
+    int byte_count = count_bytes("test.txt");
+
+    assert(char_count == 27);
+    assert(byte_count == 30);
+    assert(char_count != byte_count);
+
+    remove("test.txt");
+} 
 
 void test_count_bytes() {
     FILE* file = fopen("test.txt", "w");
@@ -59,6 +75,7 @@ int main() {
     test_file_not_found();
     test_count_lines();
     test_count_words();
+    test_count_chars();
 
     printf("All tests passed!\n");
 

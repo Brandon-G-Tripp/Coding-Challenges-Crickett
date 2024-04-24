@@ -1,6 +1,27 @@
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
+#include <wchar.h>
+
+int count_chars(const char* file_path) {
+    FILE* file = fopen(file_path, "r");
+    if (file == NULL) {
+        return -1;
+    }
+
+    setlocale(LC_ALL, "");
+
+    int count = 0;
+    wint_t ch;
+    while ((ch = fgetwc(file)) != EOF) {
+        count++;
+    } 
+    fclose(file);
+
+    return count;
+}
 
 int count_bytes(const char* file_path) {
     FILE* file = fopen(file_path, "rb");
