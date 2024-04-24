@@ -14,6 +14,9 @@ struct Args {
     #[arg(short = 'w', long = "words")]
     count_words: bool,
 
+    #[arg(short = 'm', long = "chars")]
+    count_chars: bool,
+
     #[arg(required = true)]
     file: String,
 } 
@@ -25,6 +28,16 @@ fn main() {
 
     // Get the file path from args
     let file_path = &args.file;
+
+    if args.count_chars {
+        match count_chars(file_path) {
+            Ok(count) => println!("{} {}", count, file_path),
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            } 
+        } 
+    } 
 
     // count the number of bytes in the file
     if args.count_bytes {
@@ -58,11 +71,18 @@ fn main() {
         }
     } 
 
-    if !args.count_bytes && !args.count_lines && !args.count_words {
-        eprintln!("Error: Missing -c or -l, or -w flag");
+    if !args.count_bytes && !args.count_lines && !args.count_words && !args.count_chars {
+        eprintln!("Error: Missing -c or -l, -m, or -w flag");
         std::process::exit(1);
     } 
 }
+
+fn count_chars(file_path: &str,) -> Result<usize, std::io::Error> {
+    let mut file = File::open(file_path)?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+    Ok(contents.chars().count())
+} 
 
 fn count_words(file_path: &str) -> Result<usize, std::io::Error> {
     let file = File::open(file_path)?;
@@ -144,4 +164,19 @@ mod tests {
 
         std::fs::remove_file("test_count_words.txt").unwrap();
     } 
+
+    #[test]
+    fn test_count_chars() {
+        let mut file = File::create("test_count_chars.txt").unwrap();
+         file.write_all("Sample content with 🚀 emoji".as_bytes()).unwrap();
+
+        let char_count = count_chars("test_count_chars.txt").unwrap();
+        let byte_count = count_bytes("test_count_chars.txt").unwrap();
+
+        assert_eq!(char_count, 27);
+        assert_eq!(byte_count, 30);
+        assert_ne!(char_count, byte_count);
+
+        std::fs::remove_file("test_count_chars.txt").unwrap();
+    }
 } 
