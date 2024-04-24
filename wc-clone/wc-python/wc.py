@@ -1,6 +1,14 @@
 import argparse 
 import sys
 
+def count_chars(file_path):
+    try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            content = file.read()
+            return len(content)
+    except FileNotFoundError:
+        return None
+
 def count_bytes(file_path):
     try:
         with open(file_path, "rb") as file:
@@ -29,10 +37,17 @@ def main():
     parser.add_argument("-c", "--bytes", action="store_true", help="Count bytes")
     parser.add_argument("-l", "--lines", action="store_true", help="Count lines")
     parser.add_argument("-w", "--words", action="store_true", help="Count words")
+    parser.add_argument("-m", "--chars", action="store_true", help="Count characters")
     parser.add_argument("file", help="Input file")
     args = parser.parse_args()
 
-    if args.bytes:
+    if args.chars:
+        count = count_chars(args.file)
+        if count is None:
+            print(f"Error: could not open file '{args.file}'")
+            sys.exit(1)
+        print(f"{count} {args.file}")
+    elif args.bytes:
         count = count_bytes(args.file)
         if count is None:
             print(f"Error: could not open file '{args.file}'")

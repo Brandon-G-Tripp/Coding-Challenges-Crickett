@@ -1,6 +1,6 @@
 import unittest
 import os 
-from wc import count_bytes, count_lines, count_words
+from wc import count_bytes, count_lines, count_words, count_chars
 
 class TestCountBytes(unittest.TestCase):
     def test_count_bytes(self):
@@ -41,6 +41,18 @@ class TestCountBytes(unittest.TestCase):
         count = count_words("test.txt")
 
         self.assertEqual(count, 11)
+
+        os.remove("test.txt")
+
+    def test_count_chars(self):
+        with open("test.txt", "w", encoding="utf-8") as file:
+            file.write("Sample content with 🚀 emoji")
+
+        char_count = count_chars("test.txt")
+        byte_count = count_bytes("test.txt")
+
+        self.assertEqual(char_count, 27)
+        self.assertNotEqual(char_count, byte_count)
 
         os.remove("test.txt")
 
