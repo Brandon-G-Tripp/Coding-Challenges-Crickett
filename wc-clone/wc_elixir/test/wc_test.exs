@@ -28,5 +28,18 @@ defmodule WcTest do
     assert Wc.count_lines(file_name) == {:error, :file_not_found}
   end
 
+  test "count_words/1 counts the number of words in a file" do 
+    content = "This is a sample file\nwith multiple words\non each line\n"
+    file_name = "test.txt"
+    File.write!(file_name, content)
+    assert Wc.count_words(file_name) == {:ok, 11}
+    File.rm!(file_name)
+  end
+
+  test "count_words/1 returns an error for a non-existent file" do 
+    file_name = "nonexistent.txt"
+    assert Wc.count_words(file_name) == {:error, :file_not_found}
+  end
+
 end
 
