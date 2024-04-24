@@ -1,6 +1,6 @@
 import unittest
 import os 
-from wc import count_bytes, count_lines
+from wc import count_bytes, count_lines, count_words
 
 class TestCountBytes(unittest.TestCase):
     def test_count_bytes(self):
@@ -38,12 +38,11 @@ class TestCountBytes(unittest.TestCase):
         with open("test.txt", "w") as file:
             file.write("This is a sample file\nwith multiple words\non each line\n")
 
-            count = count_words("test.txt")
+        count = count_words("test.txt")
 
-            self.assertEqual(count, 11)
+        self.assertEqual(count, 11)
 
-            os.remove("test.txt")
-
+        os.remove("test.txt")
 
 
 if __name__ == "__main__":

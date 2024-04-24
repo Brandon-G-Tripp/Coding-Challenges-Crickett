@@ -15,10 +15,20 @@ def count_lines(file_path):
     except FileNotFoundError:
         return None
 
+def count_words(file_path):
+    try:
+        with open(file_path, "r") as file:
+            content = file.read()
+            words = content.split()
+            return len(words)
+    except FileNotFoundError:
+        return None
+
 def main():
     parser = argparse.ArgumentParser(description="Word Count")
     parser.add_argument("-c", "--bytes", action="store_true", help="Count bytes")
     parser.add_argument("-l", "--lines", action="store_true", help="Count lines")
+    parser.add_argument("-w", "--words", action="store_true", help="Count words")
     parser.add_argument("file", help="Input file")
     args = parser.parse_args()
 
@@ -34,8 +44,14 @@ def main():
             print(f"Error: could not open file '{args.file}'")
             sys.exit(1)
         print(f"{count} {args.file}")
+    elif args.words:
+        count = count_words(args.file)
+        if count is None: 
+            print(f"Error: could not open file '{args.file}'")
+            sys.exit(1)
+        print(f"{count} {args.file}")
     else:
-        print("Error: Missing -c or -l flag")
+        print("Error: Missing -c or -l, or -w flag")
         sys.exit(1)
 
 
