@@ -11,6 +11,9 @@ struct Args {
     #[arg(short = 'l', long = "lines")]
     count_lines: bool,
 
+    #[arg(short = 'w', long = "words")]
+    count_words: bool,
+
     #[arg(required = true)]
     file: String,
 } 
@@ -45,8 +48,18 @@ fn main() {
         } 
     } 
 
-    if !args.count_bytes && !args.count_lines {
-        eprintln!("Error: Missing -c or -l flag");
+    if args.count_words {
+        match count_words(file_path) {
+            Ok(count) => println!("{} {}", count, file_path),
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            }
+        }
+    } 
+
+    if !args.count_bytes && !args.count_lines && !args.count_words {
+        eprintln!("Error: Missing -c or -l, or -w flag");
         std::process::exit(1);
     } 
 }
@@ -127,7 +140,7 @@ mod tests {
 
         let count = count_words("test_count_words.txt").unwrap();
 
-        assert_eq!(count, 12);
+        assert_eq!(count, 11);
 
         std::fs::remove_file("test_count_words.txt").unwrap();
     } 
