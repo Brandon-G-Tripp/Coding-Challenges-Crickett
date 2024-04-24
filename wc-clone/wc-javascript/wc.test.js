@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-import { countBytes, countWords, countLines } from './wc.js';
+import { countBytes, countWords, countLines, countChars } from './wc.js';
 
 describe('word count functions', () => {
     afterEach(() => {
@@ -43,5 +43,15 @@ describe('word count functions', () => {
         const count = countWords('test.txt');
 
         expect(count).toBe(11);
+    }); 
+
+    test('counts the number of characters in a file', () => {
+        fs.writeFileSync('test.txt', 'Sample content with 🚀 emoji');
+
+        const charCount = countChars('test.txt');
+        const byteCount = countBytes('test.txt');
+
+        expect(charCount).toBe(27);
+        expect(charCount).not.toBe(byteCount);
     }); 
 });

@@ -2,6 +2,18 @@ import fs from "node:fs";
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
+function countChars(filePath) {
+    try {
+        const data = fs.readFileSync(filePath, 'utf8');
+        return Array.from(data).length;
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            return null;
+        } 
+        throw error;
+    }
+}
+
 function countBytes(filePath) {
     try {
         const data = fs.readFileSync(filePath);
@@ -59,6 +71,11 @@ function runWordCount() {
             describe: 'Count words',
             type: 'boolean',
         })
+        .option('m', {
+            alias: 'chars',
+            describe: 'Count characters',
+            type: 'boolean',
+        })
         .demandCommand(1, 'Please provide a file')
         .help('h')
         .alias('h', 'help')
@@ -66,7 +83,14 @@ function runWordCount() {
 
     const filePath = argv._[0];
 
-    if (argv.bytes) {
+    if (argv.chars) {
+        const count = countChars(filePath);
+        if (count === null) {
+            console.error(`Error: Could open file '${filePath}'`);
+            process.exit(1);
+        } 
+        console.log(`${count} ${filePath}`);
+    } else if (argv.bytes) {
         const count = countBytes(filePath);
         if (count === null) {
             console.error(`Error: Could not open file '${filePath}'`);
@@ -102,4 +126,5 @@ export {
     countBytes,
     countLines,
     countWords,
+    countChars,
 }; 
