@@ -72,8 +72,16 @@ fn main() {
     } 
 
     if !args.count_bytes && !args.count_lines && !args.count_words && !args.count_chars {
-        eprintln!("Error: Missing -c or -l, -m, or -w flag");
-        std::process::exit(1);
+        match default_count(file_path) {
+            Ok((line_count, word_count, byte_count)) => {
+                println!("{} {} {} {}", line_count, word_count, byte_count, file_path);
+            }
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            }
+
+        } 
     } 
 }
 
@@ -108,6 +116,13 @@ fn count_bytes(file_path: &str) -> Result<usize, std::io::Error> {
     file.read_to_end(&mut contents)?;
     Ok(contents.len())
 } 
+
+fn default_count(file_path: &str) -> Result<(usize, usize, usize), std::io::Error> {
+    let line_count = count_lines(file_path)?;
+    let word_count = count_words(file_path)?;
+    let byte_count = count_bytes(file_path)?;
+    Ok((line_count, word_count, byte_count))
+}
 
 #[cfg(test)]
 mod tests {
@@ -178,5 +193,19 @@ mod tests {
         assert_ne!(char_count, byte_count);
 
         std::fs::remove_file("test_count_chars.txt").unwrap();
+    }
+
+    #[test]
+    fn test_default_count() {
+        let mut file = File::create("test_default_count.txt").unwrap();
+        file.write_all(b"Line 1\nLine 2\nLine 3").unwrap();
+
+        let (line_count, word_count, byte_count) = default_count("test_default_count.txt").unwrap();
+
+        assert_eq!(line_count, 3);
+        assert_eq!(word_count, 6);
+        assert_ne!(byte_count, 18);
+
+        std::fs::remove_file("test_default_count.txt").unwrap();
     }
 } 
