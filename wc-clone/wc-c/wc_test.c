@@ -8,6 +8,22 @@ extern int count_lines(const char* file_path);
 extern int count_words(const char* file_path);
 extern int count_chars(const char* file_path);
 
+void test_default_count() {
+    FILE* file = fopen("test.txt", "w");
+    fprintf(file, "Line 1\nLine 2\nLine 3\n");
+    fclose(file);
+
+    int line_count = count_lines("test.txt");
+    int word_count = count_words("test.txt");
+    int byte_count = count_bytes("test.txt");
+
+    assert(line_count == 3);
+    assert(word_count == 6);
+    assert(byte_count == 21);
+
+    remove("test.txt");
+} 
+
 void test_count_chars() {
     FILE* file = fopen("test.txt", "w");
     fprintf(file, "Sample content with 🚀 emoji");
@@ -76,6 +92,7 @@ int main() {
     test_count_lines();
     test_count_words();
     test_count_chars();
+    test_default_count();
 
     printf("All tests passed!\n");
 

@@ -79,9 +79,17 @@ int main(int argc, char* argv[]) {
     }
 
     if (!count_bytes_flag && !count_lines_flag && !count_words_flag && !count_chars_flag) {
-        fprintf(stderr, "Error: Missing -c, -l, or -w flag\n");
-        fprintf(stderr, "Usage: %s [-c] [-l] [-w] <file\n", argv[0]);
-        exit(EXIT_FAILURE);
+        int line_count = count_lines(file_path);
+        int word_count = count_words(file_path);
+        int byte_count = count_bytes(file_path);
+
+        if (line_count == -1  || word_count == -1 || byte_count == -1) {
+            fprintf(stderr, "Error: Could not open file '%s'\n", file_path);
+            exit(EXIT_FAILURE);
+        }
+
+        printf("%d %d %d %s\n", line_count, word_count, byte_count, file_path);
+        return 0;
     } 
 
     return 0;
