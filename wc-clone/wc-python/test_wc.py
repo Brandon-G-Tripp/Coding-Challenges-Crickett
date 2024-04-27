@@ -1,6 +1,6 @@
 import unittest
 import os 
-from wc import count_bytes, count_lines, count_words, count_chars
+from wc import count_bytes, count_lines, count_words, count_chars, default_count
 
 class TestCountBytes(unittest.TestCase):
     def test_count_bytes(self):
@@ -16,6 +16,19 @@ class TestCountBytes(unittest.TestCase):
 
         # Clean up the temp file
         os.remove("test.txt")
+
+    def test_default_count(self):
+        with open("test.txt", "w") as file:
+            file.write("Line 1\nLine 2\nLine 3\n")
+
+        line_count, word_count, char_count = default_count("test.txt")
+
+        self.assertEqual(line_count, 3)
+        self.assertEqual(word_count, 6)
+        self.assertEqual(char_count, 21)
+
+        os.remove("test.txt")
+
 
     def test_file_not_found(self):
         # Call the count_bytes function with a non-existent file

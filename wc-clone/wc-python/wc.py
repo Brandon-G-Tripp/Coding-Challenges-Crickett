@@ -1,6 +1,17 @@
 import argparse 
 import sys
 
+
+def default_count(file_path):
+    try:
+        line_count = count_lines(file_path)
+        word_count = count_words(file_path)
+        char_count = count_chars(file_path)
+        return line_count, word_count, char_count
+    except FileNotFoundError:
+        return None, None, None
+
+
 def count_chars(file_path):
     try:
         with open(file_path, "r", encoding="utf-8") as file:
@@ -41,33 +52,40 @@ def main():
     parser.add_argument("file", help="Input file")
     args = parser.parse_args()
 
-    if args.chars:
-        count = count_chars(args.file)
-        if count is None:
+    if not any([args.bytes, args.lines, args.words, args.chars]):
+        line_count, word_count, char_count = default_count(args.file)
+        if line_count is None:
             print(f"Error: could not open file '{args.file}'")
             sys.exit(1)
-        print(f"{count} {args.file}")
-    elif args.bytes:
-        count = count_bytes(args.file)
-        if count is None:
-            print(f"Error: could not open file '{args.file}'")
-            sys.exit(1)
-        print(f"{count} {args.file}")
-    elif args.lines:
-        count = count_lines(args.file)
-        if count is None: 
-            print(f"Error: could not open file '{args.file}'")
-            sys.exit(1)
-        print(f"{count} {args.file}")
-    elif args.words:
-        count = count_words(args.file)
-        if count is None: 
-            print(f"Error: could not open file '{args.file}'")
-            sys.exit(1)
-        print(f"{count} {args.file}")
+        print(f"{line_count} {word_count} {char_count} {args.file}")
     else:
-        print("Error: Missing -c or -l, or -w flag")
-        sys.exit(1)
+        if args.chars:
+            count = count_chars(args.file)
+            if count is None:
+                print(f"Error: could not open file '{args.file}'")
+                sys.exit(1)
+            print(f"{count} {args.file}")
+        elif args.bytes:
+            count = count_bytes(args.file)
+            if count is None:
+                print(f"Error: could not open file '{args.file}'")
+                sys.exit(1)
+            print(f"{count} {args.file}")
+        elif args.lines:
+            count = count_lines(args.file)
+            if count is None: 
+                print(f"Error: could not open file '{args.file}'")
+                sys.exit(1)
+            print(f"{count} {args.file}")
+        elif args.words:
+            count = count_words(args.file)
+            if count is None: 
+                print(f"Error: could not open file '{args.file}'")
+                sys.exit(1)
+            print(f"{count} {args.file}")
+        else:
+            print("Error: Missing -c or -l, or -w flag")
+            sys.exit(1)
 
 
 if __name__ == "__main__":
