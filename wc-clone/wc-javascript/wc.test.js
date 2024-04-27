@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-import { countBytes, countWords, countLines, countChars } from './wc.js';
+import { runWordCount, countBytes, countWords, countLines, countChars } from './wc.js';
 
 describe('word count functions', () => {
     afterEach(() => {
@@ -16,6 +16,14 @@ describe('word count functions', () => {
         const count = countLines('test.txt');
 
         expect(count).toBe(3);
+    });
+
+    test('counts lines, words, and bytes when no option is provided', () => {
+        fs.writeFileSync('test.txt', 'Line 1\nLine 2\nLine 3\n');
+
+        const result = runWordCount(['node', 'wc.js', 'test.txt']);
+
+        expect(result).toBe('3 6 21 test.txt')
     });
 
     test('counts the number of bytes in a file', () => {

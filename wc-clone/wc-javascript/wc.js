@@ -52,8 +52,8 @@ function countWords(filePath) {
     }
 }
 
-function runWordCount() {
-    const argv = yargs(hideBin(process.argv))
+function runWordCount(argv = process.argv) {
+    const args = yargs(argv.slice(2))
         .scriptName('wc')
         .usage('Usage: $0 [options] <file>')
         .option('c', {
@@ -81,7 +81,21 @@ function runWordCount() {
         .alias('h', 'help')
         .argv;
 
-    const filePath = argv._[0];
+    const filePath = args._[0];
+
+    if(!args.chars && !args.bytes && !args.lines && !args.words) {
+        const lineCount = countLines(filePath);
+        const wordCount = countWords(filePath);
+        const byteCount = countBytes(filePath);
+
+        if (lineCount === null || wordCount === null || byteCount === null) {
+            console.error(`Error: Could not open file '${filePath}'`);
+            process.exit(1);
+        } 
+
+        console.log(`${lineCount} ${wordCount} ${byteCount} ${filePath}`);
+        return `${lineCount} ${wordCount} ${byteCount} ${filePath}`;
+    } 
 
     if (argv.chars) {
         const count = countChars(filePath);
@@ -127,4 +141,5 @@ export {
     countLines,
     countWords,
     countChars,
+    runWordCount,
 }; 
