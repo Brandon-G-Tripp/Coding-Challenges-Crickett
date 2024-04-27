@@ -41,5 +41,18 @@ defmodule WcTest do
     assert Wc.count_words(file_name) == {:error, :file_not_found}
   end
 
+  test "count_chars/1 counts the number of characters in a file" do 
+    content = "Sample content with 🚀 emoji"
+    file_name = "test.txt"
+    File.write!(file_name, content)
+    assert Wc.count_chars(file_name) == {:ok, String.length(content)}
+    File.rm!(file_name)
+  end
+
+  test "count_chars/1 returns an error for a non-existent file" do 
+    file_name = "nonexistent.txt"
+    assert Wc.count_chars(file_name) == {:error, :file_not_found}
+  end
+
 end
 

@@ -3,17 +3,17 @@ defmodule Wc do
     {opts, file_names, _} =
       OptionParser.parse(
         args,
-        switches: [bytes: :boolean, lines: :boolean, words: :boolean],
-        aliases: [c: :bytes, l: :lines, w: :words]
+        switches: [bytes: :boolean, lines: :boolean, words: :boolean, chars: :boolean],
+        aliases: [c: :bytes, l: :lines, w: :words, m: :chars]
       )
 
     case {opts, file_names} do
       {[], []} ->
-        IO.puts(:stderr, "Usage: wc [-c] [-l] <file>")
+        IO.puts(:stderr, "Usage: wc [-c] [-l] [-w] [-m] <file>")
         System.halt(1)
 
       {opts, []} ->
-        IO.puts(:stderr, "Usage: wc [-c] [-l] <file>")
+        IO.puts(:stderr, "Usage: wc [-c] [-l] [-w] [-m]  <file>")
         System.halt(1)
 
       {opts, [file_name]} ->
@@ -36,6 +36,14 @@ defmodule Wc do
             end
           opts[:words] ->
             case Wc.count_words(file_name) do
+              {:ok, count} ->
+                IO.puts("#{count} #{file_name}")
+              {:error, _} ->
+                IO.puts(:stderr, "Error: Could not open file '#{file_name}'")
+                System.halt(1)
+            end
+          opts[:chars] ->
+            case Wc.count_chars(file_name) do
               {:ok, count} ->
                 IO.puts("#{count} #{file_name}")
               {:error, _} ->
@@ -81,6 +89,15 @@ defmodule Wc do
       {:ok, count}
     rescue
       File.Error -> {:error, :file_not_found}
+    end
+  end
+
+  def count_chars(file_name) do 
+    try do 
+      content = File.read!(file_name)
+      {:ok, String.length(content)}
+    rescue
+    File.Error -> {:error, :file_not_found}
     end
   end
 end
