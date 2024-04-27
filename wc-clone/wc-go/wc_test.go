@@ -6,6 +6,43 @@ import (
 
 )
 
+func TestDefaultCount(t *testing.T) {
+    file, err := os.Create("test.txt")
+    if err != nil {
+        t.Fatalf("Failed to create temporary file: %v", err)
+    } 
+
+    defer file.Close()
+    defer os.Remove("test.txt")
+
+    content := "Line 1\nLine 2\nLine 3\n"
+    _, err = file.WriteString(content)
+    if err != nil {
+        t.Fatalf("Failed to write to temporary file: %v", err)
+    } 
+
+    lineCount, wordCount, byteCount, err := defaultCount("test.txt")
+    if err != nil {
+        t.Fatalf("Unexpected error: %v", err)
+    } 
+
+    expectedLineCount := 3
+    expectedWordCount := 6
+    expectedByteCount := 21
+
+    if lineCount != expectedLineCount {
+        t.Errorf("Expected line count %d, but got %d", expectedLineCount, lineCount)
+    } 
+    
+    if wordCount != expectedWordCount {
+        t.Errorf("Expected word count %d, but got %d", expectedWordCount, wordCount)
+    } 
+
+    if byteCount != expectedByteCount {
+        t.Errorf("Expected byte count %d, but got %d", expectedByteCount, byteCount)
+    } 
+} 
+
 func TestCountChars(t *testing.T) {
     file, err := os.Create("test.txt")
     if err != nil {

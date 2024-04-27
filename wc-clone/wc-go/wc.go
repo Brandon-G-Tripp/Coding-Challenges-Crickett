@@ -8,6 +8,25 @@ import (
 	"os"
 )
 
+func defaultCount(filePath string) (int, int, int, error) {
+    lineCount, err := countLines(filePath)
+    if err != nil {
+        return 0, 0, 0, err
+    } 
+
+    wordCount, err := countWords(filePath)
+    if err != nil {
+        return 0, 0, 0, err
+    } 
+
+    byteCount, err := countBytes(filePath)
+    if err != nil {
+        return 0, 0, 0, err
+    } 
+
+    return lineCount, wordCount, byteCount, nil
+}
+
 func countChars(filePath string) (int, error) {
     data, err := ioutil.ReadFile(filePath)
     if err != nil {
@@ -73,7 +92,18 @@ func main() {
         os.Exit(1)
     } 
 
+
     filePath := flag.Arg(0)
+
+    if !*countBytesFlag && !*countLinesFlag && !*countWordsFlag && !*countCharsFlag {
+        lineCount, wordCount, byteCount, err := defaultCount(filePath)
+        if err != nil {
+            fmt.Printf("Error: Could not open file '%s'\n", filePath)
+            os.Exit(1)
+        } 
+        fmt.Printf("%d %d %d %s\n", lineCount, wordCount, byteCount, filePath)
+        return
+    }
 
     if *countCharsFlag {
         count, err := countChars(filePath)
