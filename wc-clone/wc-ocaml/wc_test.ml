@@ -1,6 +1,17 @@
 open OUnit2
 open Wc
 
+let test_default_count _ =
+    let content = "Line 1\nLine 2\nLine 3\n" in
+    let file_name = "test.txt" in
+    let oc = open_out file_name in
+    output_string oc content;
+    close_out oc;
+    let expected_output = "3 6 21 test.txt\n" in
+    let actual_output = Test_helpers.run_wc [file_name] in
+    assert_equal expected_output actual_output;
+    Sys.remove file_name
+
 let test_count_bytes _ =
     let content = "Sample content" in 
     let file_name = "test.txt" in 

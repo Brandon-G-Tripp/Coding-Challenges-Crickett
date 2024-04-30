@@ -46,7 +46,7 @@ let count_words file_name =
         close_in ic;
         !count
 
-let run_main () = 
+let run_main args = 
     let bytes_flag = ref false in
     let lines_flag = ref false in
     let words_flag = ref false in
@@ -60,13 +60,18 @@ let run_main () =
     ] in
     let usage = "Usage: wc [-c] [-l] [-w] [-m] <file>" in
     let anon_fun s = file_name := s in
-    Arg.parse spec anon_fun usage;
+    Arg.parse_argv args spec anon_fun usage;
     if !file_name = "" then
         (Printf.eprintf "%s\n" usage;
         exit 1)
     else
         try
-            if !chars_flag then
+            if not !bytes_flag && not !lines_flag && not !words_flag && not !chars_flag then
+                let line_count = count_lines !file_name in
+                let word_count = count_words !file_name in
+                let byte_count = count_bytes !file_name in
+                Printf.printf "%d %d %d %s\n" line_count word_count byte_count !file_name
+            else if !chars_flag then
                 let count = count_chars !file_name in
                 Printf.printf "%d %s\n" count !file_name
             else if !bytes_flag then
@@ -85,4 +90,4 @@ let run_main () =
             Printf.eprintf "Error: Could not open file '%s'\n" !file_name;
             exit 1
 
-let () = if Array.length Sys.argv > 1 then run_main ()
+let () = if Array.length Sys.argv > 1 then run_main Sys.argv else ()
