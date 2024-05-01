@@ -4,31 +4,54 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
+	"strings"
 )
 
 func defaultCount(filePath string) (int, int, int, error) {
-    lineCount, err := countLines(filePath)
-    if err != nil {
-        return 0, 0, 0, err
-    } 
+    var lineCount, wordCount, byteCount int
+    var err error
 
-    wordCount, err := countWords(filePath)
-    if err != nil {
-        return 0, 0, 0, err
-    } 
+    if filePath == "-" {
+        scanner := bufio.NewScanner(os.Stdin)
+        for scanner.Scan() {
+            line := scanner.Text()
+            lineCount++
+            wordCount += len(strings.Fields(line))
+            byteCount += len(scanner.Bytes())
+        }
+        if err := scanner.Err(); err != nil {
+            return 0, 0, 0, err
+        }
+    } else {
+        lineCount, err = countLines(filePath)
+        if err != nil {
+            return 0, 0, 0, err
+        } 
 
-    byteCount, err := countBytes(filePath)
-    if err != nil {
-        return 0, 0, 0, err
-    } 
+        wordCount, err = countWords(filePath)
+        if err != nil {
+            return 0, 0, 0, err
+        } 
+
+        byteCount, err = countBytes(filePath)
+        if err != nil {
+            return 0, 0, 0, err
+        } 
+    }
 
     return lineCount, wordCount, byteCount, nil
 }
 
 func countChars(filePath string) (int, error) {
-    data, err := ioutil.ReadFile(filePath)
+    var data []byte
+    var err error
+    if filePath == "-" {
+        data, err = io.ReadAll(os.Stdin)
+    } else {
+        data, err = os.ReadFile(filePath)
+    } 
     if err != nil {
         return 0, err
     } 
@@ -42,13 +65,18 @@ func countChars(filePath string) (int, error) {
 }
 
 func countWords(filePath string) (int, error) {
-    file, err := os.Open(filePath)
-    if err != nil {
-        return 0, err
-    } 
-    defer file.Close()
+    var scanner *bufio.Scanner
+    if filePath == "-" {
+        scanner = bufio.NewScanner(os.Stdin)
+    } else {
+        file, err := os.Open(filePath)
+        if err != nil {
+            return 0, err
+        } 
+        defer file.Close()
+        scanner = bufio.NewScanner(file)
+    }
 
-    scanner := bufio.NewScanner(file)
     scanner.Split(bufio.ScanWords)
     count := 0 
     for scanner.Scan() {
@@ -58,7 +86,13 @@ func countWords(filePath string) (int, error) {
 } 
 
 func countBytes(filePath string) (int, error) {
-    data, err := ioutil.ReadFile(filePath)
+    var data []byte
+    var err error
+    if filePath == "-" {
+        data, err = io.ReadAll(os.Stdin)
+    } else {
+        data, err = os.ReadFile(filePath)
+    }
     if err != nil {
         return 0, err
     }
@@ -66,13 +100,17 @@ func countBytes(filePath string) (int, error) {
 } 
 
 func countLines(filePath string) (int, error) {
-    file, err := os.Open(filePath)
-    if err != nil {
-        return 0, err
+    var scanner *bufio.Scanner
+    if filePath == "-" {
+        scanner = bufio.NewScanner(os.Stdin)
+    } else {
+        file, err := os.Open(filePath)
+        if err != nil {
+            return 0, err
+        }
+        defer file.Close()
+        scanner = bufio.NewScanner(file)
     }
-    defer file.Close()
-
-    scanner := bufio.NewScanner(file)
     count := 0
     for scanner.Scan() {
         count++
@@ -87,21 +125,20 @@ func main() {
     countCharsFlag := flag.Bool("m", false, "Count characters")
     flag.Parse()
 
+    var filePath string
     if flag.NArg() == 0 {
-        fmt.Println("Please provide a file")
-        os.Exit(1)
+        filePath = "-"
+    } else {
+        filePath = flag.Arg(0)
     } 
-
-
-    filePath := flag.Arg(0)
 
     if !*countBytesFlag && !*countLinesFlag && !*countWordsFlag && !*countCharsFlag {
         lineCount, wordCount, byteCount, err := defaultCount(filePath)
         if err != nil {
-            fmt.Printf("Error: Could not open file '%s'\n", filePath)
+            fmt.Println("Error: Could not read input")
             os.Exit(1)
         } 
-        fmt.Printf("%d %d %d %s\n", lineCount, wordCount, byteCount, filePath)
+        fmt.Printf("%d %d %d\n", lineCount, wordCount, byteCount)
         return
     }
 

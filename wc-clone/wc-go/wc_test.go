@@ -1,9 +1,10 @@
 package main
 
 import (
+	"bytes"
+	"io"
 	"os"
 	"testing"
-
 )
 
 func TestDefaultCount(t *testing.T) {
@@ -172,3 +173,55 @@ func TestCountBytesFileNotFound(t *testing.T) {
         t.Error("Expected an error, but got nil")
     } 
 } 
+
+func TestReadFromStdin(t *testing.T) {
+    // Prepare the input data
+    input := "Line 1\nLine 2\nLine 3\n"
+
+    // Create a temporary file to store the input data
+    tempFile, err := os.CreateTemp("", "test_input")
+    if err != nil {
+        t.Fatalf("Failed to create temporary file: %v", err)
+    }
+    defer os.Remove(tempFile.Name())
+
+    // Write the input data to the temporary file
+    _, err = tempFile.WriteString(input)
+    if err != nil {
+        t.Fatalf("Failed to write input data to temporary file: %v", err)
+    }
+    tempFile.Close()
+
+    // Redirect standard input to the temporary file
+    oldStdin := os.Stdin
+    defer func() { os.Stdin = oldStdin }()
+    file, err := os.Open(tempFile.Name())
+    if err != nil {
+        t.Fatalf("Failed to open temporary file: %v", err)
+    }
+    defer file.Close()
+    os.Stdin = file
+
+    // capture the std output
+    oldStdout := os.Stdout
+    defer func() { os.Stdout = oldStdout }()
+    r, w, _ := os.Pipe()
+    os.Stdout = w
+
+    main()
+
+    w.Close()
+
+    // Read captured output 
+    var buf bytes.Buffer 
+    _, err = io.Copy(&buf, r)
+    if err != nil {
+        t.Fatalf("Failed to read captured output: %v", err)
+    } 
+
+    // Check the output
+    expectedOutput := "3 6 18\n"
+    if buf.String() != expectedOutput {
+        t.Errorf("Expected output: %q, but got: %q", expectedOutput, buf.String())
+    }
+}
