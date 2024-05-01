@@ -1,5 +1,8 @@
 import unittest
+import io
+import sys
 import os 
+from unittest import mock
 from wc import count_bytes, count_lines, count_words, count_chars, default_count
 
 class TestCountBytes(unittest.TestCase):
@@ -68,6 +71,30 @@ class TestCountBytes(unittest.TestCase):
         self.assertNotEqual(char_count, byte_count)
 
         os.remove("test.txt")
+
+    def test_count_lines_stdin(self):
+        input_data = "Line 1\nLine 2\nLine 3\n"
+        with mock.patch('sys.stdin', io.StringIO(input_data)):
+            count = count_lines(sys.stdin)
+            self.assertEqual(count, 3)
+
+    def test_count_words_stdin(self):
+        input_data = "This is a sample input\nwith multiple words\non each line\n"
+        with mock.patch('sys.stdin', io.StringIO(input_data)):
+            count = count_words(sys.stdin)
+            self.assertEqual(count, 11)
+
+    def test_count_chars_stdin(self):
+        input_data = "Sample content with 🚀 emoji"
+        with mock.patch('sys.stdin', io.StringIO(input_data)):
+            char_count = count_chars(sys.stdin)
+            self.assertEqual(char_count, 27)
+
+    def test_count_bytes_stdin(self):
+        input_data = "Sample content"
+        with mock.patch('sys.stdin', io.StringIO(input_data)):
+            count = count_bytes(sys.stdin)
+            self.assertEqual(count, 14)
 
 
 if __name__ == "__main__":
