@@ -1,6 +1,6 @@
 import fs from "node:fs";
+import process from "node:process";
 import yargs from 'yargs';
-import { hideBin } from 'yargs/helpers';
 
 function countChars(filePath) {
     try {
@@ -52,7 +52,21 @@ function countWords(filePath) {
     }
 }
 
-function runWordCount(argv = process.argv) {
+function countLinesFromInput(inputData) {
+    const lines = inputData.split('\n');
+    return lines[lines.length - 1] === '' ? lines.length - 1 : lines.length;
+}
+
+function countWordsFromInput(inputData) {
+    const words = inputData.trim().split(/\s+/);
+    return words.length;
+}
+
+function countBytesFromInput(inputData) {
+    return Buffer.byteLength(inputData, 'utf8');
+} 
+
+async function runWordCount(argv = process.argv) {
     const args = yargs(argv.slice(2))
         .scriptName('wc')
         .usage('Usage: $0 [options] <file>')
@@ -76,25 +90,33 @@ function runWordCount(argv = process.argv) {
             describe: 'Count characters',
             type: 'boolean',
         })
-        .demandCommand(1, 'Please provide a file')
         .help('h')
         .alias('h', 'help')
         .argv;
 
     const filePath = args._[0];
+    let inputData = '';
+
+    if (!filePath) {
+        process.stdin.setEncoding('utf8');
+        for await (const chunk of process.stdin) {
+            inputData += chunk;
+        }
+    }
 
     if(!args.chars && !args.bytes && !args.lines && !args.words) {
-        const lineCount = countLines(filePath);
-        const wordCount = countWords(filePath);
-        const byteCount = countBytes(filePath);
+        const lineCount = filePath ? countLines(filePath) : countLinesFromInput(inputData);
+        const wordCount = filePath ? countWords(filePath) : countWordsFromInput(inputData);
+        const byteCount = filePath ? countBytes(filePath) : countBytesFromInput(inputData);
 
         if (lineCount === null || wordCount === null || byteCount === null) {
-            console.error(`Error: Could not open file '${filePath}'`);
+            console.error(`Error: Could not '${filePath ? `open file '${filePath}'` : 'read from standard input'}`); 
             process.exit(1);
         } 
 
-        console.log(`${lineCount} ${wordCount} ${byteCount} ${filePath}`);
-        return `${lineCount} ${wordCount} ${byteCount} ${filePath}`;
+        const result = `${lineCount} ${wordCount} ${byteCount} ${filePath ? `${filePath}` : ''}`.trim();
+        console.log(result);
+        return result;
     } 
 
     if (argv.chars) {
@@ -141,5 +163,8 @@ export {
     countLines,
     countWords,
     countChars,
+    countBytesFromInput,
+    countWordsFromInput,
+    countLinesFromInput,
     runWordCount,
 }; 

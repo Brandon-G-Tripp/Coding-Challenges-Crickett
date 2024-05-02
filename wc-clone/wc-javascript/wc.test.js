@@ -1,5 +1,9 @@
 import fs from 'node:fs';
 
+import { jest } from '@jest/globals';
+
+import { Readable } from 'stream';
+
 import { runWordCount, countBytes, countWords, countLines, countChars } from './wc.js';
 
 describe('word count functions', () => {
@@ -18,10 +22,10 @@ describe('word count functions', () => {
         expect(count).toBe(3);
     });
 
-    test('counts lines, words, and bytes when no option is provided', () => {
+    test('counts lines, words, and bytes when no option is provided', async () => {
         fs.writeFileSync('test.txt', 'Line 1\nLine 2\nLine 3\n');
 
-        const result = runWordCount(['node', 'wc.js', 'test.txt']);
+        const result = await runWordCount(['node', 'wc.js', 'test.txt']);
 
         expect(result).toBe('3 6 21 test.txt')
     });
@@ -62,4 +66,26 @@ describe('word count functions', () => {
         expect(charCount).toBe(27);
         expect(charCount).not.toBe(byteCount);
     }); 
+
+    test('reads from standard input when no filename is provided', async () => {
+        const stdin = 'Line 1\nLine 2\nLine 3\n';
+        const expectedOutput = '3 6 21';
+
+        const stdinStream = new Readable();
+        stdinStream.push(stdin);
+        stdinStream.push(null);
+
+        // Mock standard input
+        const stdinMock = jest.spyOn(process, 'stdin', 'get').mockReturnValue(stdinStream);
+
+        // capture the console output
+        const consoleLogMock = jest.spyOn(console, 'log').mockImplementation();
+
+        await runWordCount(['node', 'wc.js']);
+
+        expect(consoleLogMock).toHaveBeenCalledWith(expectedOutput);
+
+        stdinMock.mockRestore();
+        consoleLogMock.mockRestore()
+    });
 });
