@@ -35,11 +35,11 @@ mod test {
     use std::process::Command;
 
     #[test]
-    fn test_invalid_json_file() {
+    fn test_invalid_json_file_step1() {
         let output = Command::new("cargo")
             .arg("run")
             .arg("--")
-            .arg("../test_data/step1/invalid.json")
+            .arg("tests/invalid.json")
             .output()
             .expect("Failed to execute command");
 
@@ -48,11 +48,63 @@ mod test {
     }
 
     #[test]
-    fn test_valid_json_file() {
+    fn test_valid_json_file_step1() {
         let output = Command::new("cargo")
             .arg("run")
             .arg("--")
-            .arg("../test_data/step1/valid.json")
+            .arg("tests/valid.json")
+            .output()
+            .expect("Failed to execute command");
+
+        assert_eq!(output.status.code(), Some(0));
+        assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "Valid JSON");
+    }
+
+    #[test]
+    fn test_invalid_json_file_step2_case1() {
+        let output = Command::new("cargo")
+            .arg("run")
+            .arg("--")
+            .arg("tests/invalid.json")
+            .output()
+            .expect("Failed to execute command");
+
+        assert_eq!(output.status.code(), Some(1));
+        assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "Invalid JSON");
+    } 
+
+    #[test]
+    fn test_invalid_json_file_step2_case2() {
+        let output = Command::new("cargo")
+            .arg("run")
+            .arg("--")
+            .arg(concat!("tests/invalid2.json"))
+            .output()
+            .expect("Failed to execute command");
+
+        assert_eq!(output.status.code(), Some(1));
+        assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "Invalid JSON");
+    }
+
+    #[test]
+    fn test_valid_json_file_step2_case1() {
+        let output = Command::new("cargo")
+            .arg("run")
+            .arg("--")
+            .arg("tests/valid.json")
+            .output()
+            .expect("Failed to execute command");
+
+        assert_eq!(output.status.code(), Some(0));
+        assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "Valid JSON");
+    } 
+
+    #[test]
+    fn test_valid_json_file_step2_case2() {
+        let output = Command::new("cargo")
+            .arg("run")
+            .arg("--")
+            .arg("tests/valid2.json")
             .output()
             .expect("Failed to execute command");
 
