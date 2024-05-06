@@ -1,0 +1,3 @@
+(library
+  (name json_parser)
+  (public_name json_parser.parser))

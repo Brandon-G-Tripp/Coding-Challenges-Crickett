@@ -1,0 +1,4 @@
+(executable
+ (name cli)
+ (public_name json_parser)
+ (libraries json_parser.parser))
