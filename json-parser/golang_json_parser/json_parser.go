@@ -32,7 +32,35 @@ func main() {
 
 func isValidJSON(json string) bool {
     json = strings.TrimSpace(json)
-    return len(json) >= 2 && json[0] == '{' && json[len(json) - 1] == '}'
+
+    if !strings.HasPrefix(json, "{") || !strings.HasSuffix(json, "}") {
+        return false
+    }
+
+    if json == "{}" {
+        return true
+    }
+
+    content := json[1 : len(json) - 1]
+    pairs := strings.Split(content, ",")
+
+    for _, pair := range pairs {
+        parts := strings.SplitN(pair, ":", 2)
+        if len(parts) != 2 {
+            return false
+        }
+
+        key := strings.TrimSpace(parts[0])
+        value := strings.TrimSpace(parts[1])
+
+        if !isValidString(key) || !isValidString(value) {
+            return false
+        }
+    }
+
+    return true
 } 
 
-
+func isValidString(str string) bool {
+    return len(str) >= 2 && strings.HasPrefix(str, "\"") && strings.HasSuffix(str, "\"")
+}
