@@ -17,10 +17,44 @@ let parse_json input_string =
             false
     in
 
-    let parse_object () = 
-        if not (consume_char '{') then false
-        else if not (consume_char '}') then false
-        else true
+    let parse_string () =
+        if not (consume_char '"') then false
+        else (
+            while !index < len && input_string.[!index] <> '"' do 
+                if input_string.[!index] = '\\' then incr index;
+                incr index
+            done;
+            consume_char '"'
+        )
     in
 
-    parse_object ()
+    let parse_key_value_pair () = 
+        if not (parse_string ()) then false
+        else if not (consume_char ':') then false
+        else parse_string ()
+    in
+
+    let rec parse_pairs () = 
+        consume_whitespace ();
+        if consume_char '}' then true
+        else if not (parse_key_value_pair ()) then false
+        else (
+            consume_whitespace ();
+            if consume_char ',' then (
+                consume_whitespace ();
+                if consume_char '}' then false
+                else parse_pairs ()
+            ) else
+                consume_char '}'
+        )
+    in
+
+    if not (consume_char '{') then false 
+    else (
+        if parse_pairs () then (
+            consume_whitespace ();
+            !index = len
+        ) else 
+            false
+    )
+
