@@ -21,7 +21,7 @@ pub fn is_valid_json(json: &str) -> bool {
                 return false;
             }
 
-            if !value.starts_with("\"") || !value.ends_with("\"") || value.len() < 2 {
+            if !is_valid_value(value) {
                 return false;
             }
         }
@@ -31,6 +31,13 @@ pub fn is_valid_json(json: &str) -> bool {
 
     false
 }
+
+fn is_valid_value(value: &str) -> bool {
+    value.starts_with("\"") && value.ends_with("\"") && value.len() >= 2 ||
+        value == "true" || value == "false" || value == "null" ||
+        value.parse::<f64>().is_ok()
+}
+
 
 #[cfg(test)]
 mod test {
@@ -59,4 +66,17 @@ mod test {
         let json = "}";
         assert_eq!(is_valid_json(json), false);
     } 
+
+    #[test]
+    fn test_valid_json_object_with_different_value_types() {
+        let json = r#"{
+            "key1": true,
+            "key2": false,
+            "key3": null,
+            "key4": "value",
+            "key5": 101
+        }"#;
+
+        assert_eq!(is_valid_json(json), true);
+    }
 } 
