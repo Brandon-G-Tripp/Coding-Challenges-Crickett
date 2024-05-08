@@ -26,4 +26,17 @@ describe('JSON Parser', () => {
         const result = parseJson(invalidJson);
         expect(result).toBe(false);
     });
+
+    it('should parse a valid JSON object with different value types', () => {
+        const validJson = `{
+            "key1": true,
+            "key2": false,
+            "key3": null,
+            "key4": "value",
+            "key5": 101
+        }`;
+
+        const result = parseJson(validJson);
+        expect(result).toBe(true);
+    });
 });

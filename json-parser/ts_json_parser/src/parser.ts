@@ -16,6 +16,58 @@ export function parseJson(input: string): boolean {
         return false;
     }
 
+    function parseValue(): boolean {
+        consumeWhitespace();
+
+        if (input[index] === '"') {
+            return parseString();
+        } else if (input[index] === 't' || input[index] === 'f') {
+            return parseBoolean();
+        } else if (input[index] === 'n') {
+            return parseNull();
+        } else if (/[-0-9]/.test(input[index])) {
+            return parseNumber();
+        }
+
+        return false;
+    }
+
+    function parseBoolean(): boolean {
+        if (input.slice(index, index + 4) === 'true') {
+            index += 4;
+            return true;
+        } else if (input.slice(index, index + 5) === 'false') {
+            index += 5;
+            return true;
+        }
+        return false;
+    }
+
+    function parseNull(): boolean {
+        if (input.slice(index, index + 4) === 'null') {
+            index += 4;
+            return true;
+        }
+        return false;
+    }
+
+    function parseNumber(): boolean {
+        const start = index;
+        if (input[index] === '-') {
+            index++;
+        }
+        while (index < input.length && /[0-9]/.test(input[index])) {
+            index++;
+        }
+        if (input[index] === '.') {
+            index++;
+            while (index < input.length && /[0-9]/.test(input[index])) {
+                index++;
+            }
+        }
+        return index > start;
+    }
+
     function parseString(): boolean {
         if (!consumeChar('"')) {
             return false;
@@ -38,7 +90,7 @@ export function parseJson(input: string): boolean {
             return false;
         }
 
-        if (!parseString()) {
+        if (!parseValue()) {
             return false;
         }
 
