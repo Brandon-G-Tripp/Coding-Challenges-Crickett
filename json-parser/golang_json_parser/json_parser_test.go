@@ -64,3 +64,17 @@ func TestIsValidJSON_InvalidMissingColon(t *testing.T) {
 		t.Errorf("Expected invalid JSON, but got valid")
 	}
 }
+
+func TestIsValidJSON_ValidDifferentValueTypes(t *testing.T) {
+    json := `{
+        "key1": true,
+        "key2": false,
+        "key3": null,
+        "key4": "value",
+        "key5": 101
+    }`
+
+    if !isValidJSON(json) {
+        t.Errorf("Expected valid JSON, but got invalid")
+    }
+}

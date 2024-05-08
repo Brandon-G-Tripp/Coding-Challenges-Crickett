@@ -53,13 +53,47 @@ func isValidJSON(json string) bool {
         key := strings.TrimSpace(parts[0])
         value := strings.TrimSpace(parts[1])
 
-        if !isValidString(key) || !isValidString(value) {
+        if !isValidString(key) {
+            return false
+        }
+
+        if !isValidValue(value) {
             return false
         }
     }
 
     return true
 } 
+
+func isValidValue(value string) bool {
+    return isValidString(value) || isValidBoolean(value) || isValidNull(value) || isValidNumber(value)
+}
+
+func isValidBoolean(value string) bool {
+    return value == "true" || value == "false"
+}
+
+func isValidNull(value string) bool {
+    return value == "null"
+}
+
+func isValidNumber(value string) bool {
+    if value == "" {
+        return false
+    }
+    if value[0] == '-' {
+        value = value[1:]
+    }
+    if value == "" {
+        return false
+    }
+    for _, char := range value {
+        if (char < '0' || char > '9') && char != '.' {
+            return false
+        }
+    }
+    return true
+}
 
 func isValidString(str string) bool {
     return len(str) >= 2 && strings.HasPrefix(str, "\"") && strings.HasSuffix(str, "\"")
