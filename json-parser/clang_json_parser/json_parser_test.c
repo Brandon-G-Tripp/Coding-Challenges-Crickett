@@ -92,6 +92,23 @@ void test_invalid_json_object_missing_colon() {
     }
 }
 
+void test_valid_json_object_with_different_value_types() {
+    const char *json = "{\n"
+            " \"key1\": true,\n"
+            " \"key2\": false,\n"
+            " \"key3\": null,\n"
+            " \"key4\": \"value\",\n"
+            " \"key5\": 101\n"
+        "}";
+
+    bool is_valid = is_valid_json(json);
+    if (is_valid) {
+        printf("Test passed: Valid JSON object with different value types\n");
+    } else {
+        printf("Test failed: Valid JSON object with different value types\n");
+    }
+}
+
 int main() {
     test_valid_empty_object();
     test_valid_empty_object_with_whitespace();
@@ -102,5 +119,6 @@ int main() {
     test_invalid_json_object_missing_key();
     test_invalid_json_object_missing_value();
     test_invalid_json_object_missing_colon();
+    test_valid_json_object_with_different_value_types();
     return 0;
 } 
