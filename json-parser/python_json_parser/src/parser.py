@@ -14,6 +14,48 @@ def parse_json(input_string):
             return True
         return False
 
+    def parse_value():
+        consume_whitespace()
+        if input_string[index] == '"':
+            return parse_string()
+        elif input_string[index] == 't' or input_string[index] == 'f':
+            return parse_boolean()
+        elif input_string[index] == 'n':
+            return parse_null()
+        elif input_string[index].isdigit() or input_string[index] == '-':
+            return parse_number()
+        return False
+
+    def parse_boolean():
+        nonlocal index
+        if input_string[index:index+4] == 'true':
+            index += 4
+            return True
+        elif input_string[index:index+5] == 'false':
+            index += 5
+            return True
+        return False
+
+    def parse_null(): 
+        nonlocal index 
+        if input_string[index:index+4] == 'null':
+            index += 4
+            return True
+        return False
+
+    def parse_number():
+        nonlocal index
+        start = index 
+        if input_string[index] == '-':
+            index += 1
+        while index < len(input_string) and input_string[index].isdigit():
+            index +=1
+        if index < len(input_string) and input_string[index] == '.':
+            index += 1
+            while index < len(input_string) and input_string[index].isdigit():
+                index += 1
+        return index > start
+
     def parse_string():
         nonlocal index
         if not consume_char('"'):
@@ -34,12 +76,6 @@ def parse_json(input_string):
         if not parse_value():
             return False
         return True
-
-    def parse_value():
-        consume_whitespace()
-        if parse_string():
-            return True
-        return False
 
     def parse_object():
         if not consume_char('{'):

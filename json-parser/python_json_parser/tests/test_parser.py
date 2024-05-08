@@ -36,3 +36,14 @@ def test_parse_invalid_object_with_invalid_key():
     with open(os.path.join(os.path.dirname(__file__), 'step2', 'invalid2.json'), 'r') as file:
         invalid_json = file.read()
         assert parse_json(invalid_json) == False
+
+def test_parse_valid_object_with_different_value_types():
+    valid_json = '''{
+        "key1": true,
+        "key2": false,
+        "key3": null,
+        "key4": "value",
+        "key5": 101
+    }'''
+
+    assert parse_json(valid_json) == True
