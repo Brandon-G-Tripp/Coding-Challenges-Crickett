@@ -12,12 +12,14 @@ defmodule CLI do
   defp parse_file(file_path) do 
     case File.read(file_path) do 
       {:ok, content} ->
-        if Parser.parse_json(content) do 
-          IO.puts("Valid JSON")
-          System.halt(1)
-        else
-          IO.puts("Invalid JSON")
-          System.halt(1)
+        case Parser.parse(content) do 
+          {:ok, _result} -> 
+            IO.puts("Valid JSON")
+            System.halt(0)
+          
+          {:error, reason} -> 
+            IO.puts("Invalid JSON: #{reason}")
+            System.halt(1)
         end
 
       {:error, reason} ->
