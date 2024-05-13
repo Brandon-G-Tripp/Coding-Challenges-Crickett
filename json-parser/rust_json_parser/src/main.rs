@@ -137,4 +137,43 @@ mod test {
         assert_eq!(output.status.code(), Some(1));
         assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "Invalid JSON");
     }
+
+    #[test]
+    fn test_valid_json_file_step4() {
+        let output = Command::new("cargo")
+            .arg("run")
+            .arg("--")
+            .arg("tests/step4/valid.json")
+            .output()
+            .expect("Failed to execute command");
+
+        assert_eq!(output.status.code(), Some(0));
+        assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "Valid JSON");
+    }
+
+    #[test]
+    fn test_valid2_json_file_step4() {
+        let output = Command::new("cargo")
+            .arg("run")
+            .arg("--")
+            .arg("tests/step4/valid2.json")
+            .output()
+            .expect("Failed to execute command");
+
+        assert_eq!(output.status.code(), Some(0));
+        assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "Valid JSON");
+    }
+
+    #[test]
+    fn test_invalid_json_file_step4() {
+        let output = Command::new("cargo")
+            .arg("run")
+            .arg("--")
+            .arg("tests/step4/invalid.json")
+            .output()
+            .expect("Failed to execute command");
+
+        assert_eq!(output.status.code(), Some(1));
+        assert_eq!(String::from_utf8_lossy(&output.stdout).trim(), "Invalid JSON");
+    }
 }
