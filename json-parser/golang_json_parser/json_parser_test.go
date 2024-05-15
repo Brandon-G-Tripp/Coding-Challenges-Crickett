@@ -78,3 +78,32 @@ func TestIsValidJSON_ValidDifferentValueTypes(t *testing.T) {
         t.Errorf("Expected valid JSON, but got invalid")
     }
 }
+
+func TestIsValidJSON_ValidArray(t *testing.T) {
+    json := `{"key": [1, 2, 3]}`
+    if !isValidJSON(json) {
+        t.Errorf("Expected valid JSON, but got invalid")
+    }
+}
+
+func TestIsValidJSON_ValidArrayWithDifferentTypes(t *testing.T) {
+    json := `{"key": [1, "two", true, null]}`
+    if !isValidJSON(json) {
+        t.Errorf("Expected valid JSON, but got invalid")
+    }
+}
+
+func TestIsValidJSON_ValidNestedArray(t *testing.T) {
+    json := `{"key": [[1, 2], [3, 4]]}`
+    if !isValidJSON(json) {
+        t.Errorf("Expected valid JSON, but got invalid")
+    }
+}
+
+func TestIsValidJSON_InvalidArrayMissingComma(t *testing.T) {
+    json := `{"key": [1 2]}`
+    if isValidJSON(json) {
+        t.Errorf("Expected invalid JSON, but got valid")
+    }
+}
+
