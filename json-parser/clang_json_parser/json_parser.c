@@ -1,62 +1,222 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include "json_parser.h"
 
-bool is_valid_value(const char *value) {
-    const char *ptr = value;
+#define MAX_STACK_SIZE 256
 
-    while (isspace(*ptr)) {
-        ptr++;
+char stack[MAX_STACK_SIZE];
+int top = -1;
+
+void push(char c) {
+    if (top == MAX_STACK_SIZE - 1) {
+        // stack overflow
+        return;
     }
+    stack[++top] = c;
+}
 
-    if (strcmp(ptr, "true") == 0 || strcmp(ptr, "false") == 0 || strcmp(ptr, "null") == 0) {
-        return true;
+char pop() {
+    if (top == -1) {
+        // stack underflow
+        return '\0';
     }
+    return stack[top--];
+}
 
-    if (*ptr == '"') {
-        ptr++;
-        while (*ptr != '"') {
-            if (*ptr == '\0') {
-                return false;
-            }
-            ptr++;
+bool is_valid_value(const char **ptr);
+
+bool is_valid_string(const char **ptr) {
+    const char *p = *ptr;
+
+    if (*p != '"') {
+        return false;
+    }
+    p++;
+
+    while (*p != '"') {
+        if (*p == '\0') {
+            return false;
         }
-        ptr++;
-        while (isspace(*ptr)) {
-            ptr++;
-        }
-        return *ptr == '\0';
+        p++;
+    }
+    p++;
+
+    *ptr = p;
+    return true;
+}
+
+bool is_valid_number(const char **ptr) {
+    const char *p = *ptr;
+
+    if (*p == '-') {
+        p++;
     }
 
-    if (*ptr == '-') {
-        ptr++;
-    }
-
-    if (!isdigit(*ptr)) {
+    if (!isdigit(*p)) {
         return false;
     }
 
-    while (isdigit(*ptr)) {
-        ptr++;
+    while (isdigit(*p)) {
+        p++;
     }
 
-    if (*ptr == '.') {
-        ptr++;
-        if (!isdigit(*ptr)) {
+    if (*p == '.') {
+        p++;
+        if (!isdigit(*p)) {
             return false;
         }
-        while (isdigit(*ptr)) {
-            ptr++;
+        while (isdigit(*p)) {
+            p++;
         }
     }
 
-    while (isspace(*ptr)) {
-        ptr++;
+    *ptr = p;
+    return true;
+}
+
+bool is_valid_object(const char **ptr) {
+    const char *p = *ptr;
+
+    if (*p != '{') {
+        return false;
+    }
+    p++;
+
+    while (isspace(*p)) {
+        p++;
     }
 
-    return *ptr == '\0';
+    if (*p == '}') {
+        p++;
+        *ptr = p;
+        return true;
+    }
+
+    while (*p != '\0') {
+        if (!is_valid_string(&p)) {
+            return false;
+        }
+
+        while (isspace(*p)) {
+            p++;
+        }
+
+        if (*p != ':') {
+            return false;
+        }
+        p++;
+
+        while (isspace(*p)) {
+            p++;
+        }
+
+        if (!is_valid_value(&p)) {
+            return false;
+        }
+
+        while (isspace(*p)) {
+            p++;
+        }
+
+        if (*p == ',') {
+            p++;
+            while (isspace(*p)) {
+                p++;
+            }
+        } else if (*p == '}') {
+            p++;
+            break;
+        } else {
+            return false;
+        }
+    }
+
+    *ptr = p;
+    return true;
+}
+
+bool is_valid_array(const char **ptr) {
+    const char *p = *ptr;
+
+    if (*p != '[') {
+        return false;
+    }
+    p++;
+
+    while (isspace(*p)) {
+        p++;
+    }
+
+    if (*p == ']') {
+        p++;
+        *ptr = p;
+        return true;
+    }
+
+    while (*p != '\0') {
+        if (!is_valid_value(&p)) {
+            return false;
+        }
+
+        while (isspace(*p)) {
+            p++;
+        }
+
+        if (*p == ',') {
+            p++;
+            while (isspace(*p)) {
+                p++;
+            }
+        } else if (*p == ']') {
+            p++;
+            break;
+        } else {
+            return false;
+        }
+    }
+
+    *ptr = p;
+    return true;
+}
+
+bool is_valid_value(const char **ptr) {
+    const char *p = *ptr;
+
+    while (isspace(*p)) {
+        p++;
+    }
+
+    if (*p == '"') {
+        if (!is_valid_string(&p)) {
+            return false;
+        }
+    } else if (*p == '-' || isdigit(*p)) {
+        if (!is_valid_number(&p)) {
+            return false;
+        }
+    } else if (*p == '{') {
+        if (!is_valid_object(&p)) {
+            return false;
+        }
+    } else if (*p == '[') {
+        if (!is_valid_array(&p)) {
+            return false;
+        }
+    } else if (strncmp(p, "true", 4) == 0) {
+        p += 4;
+    } else if (strncmp(p, "false", 5) == 0) {
+        p += 5;
+    } else if (strncmp(p, "null", 4) == 0) {
+        p += 4;
+    } else {
+        return false;
+    }
+
+    *ptr = p;
+    return true;
 }
 
 bool is_valid_json(const char *json) {
@@ -66,79 +226,23 @@ bool is_valid_json(const char *json) {
         ptr++;
     }
 
-    if (*ptr != '{') {
+    if (*ptr == '{') {
+        if (!is_valid_object(&ptr)) {
+            return false;
+        }
+    } else if (*ptr == '[') {
+        if (!is_valid_array(&ptr)) {
+            return false;
+        }
+    } else {
         return false;
     }
-    ptr++;
 
     while (isspace(*ptr)) {
         ptr++;
     }
 
-    if (*ptr == '}') {
-        return true;
-    }
-
-    while (*ptr != '\0') {
-        if (*ptr != '"') {
-            return false;
-        }
-        ptr++;
-        const char *key_start = ptr;
-        while (*ptr != '"') {
-            if (*ptr == '\0') {
-                return false;
-            }
-            ptr++;
-        }
-        ptr++;
-
-        while (isspace(*ptr)) {
-            ptr++;
-        }
-
-        if (*ptr != ':') {
-            return false;
-        }
-        ptr++;
-
-        while (isspace(*ptr)) {
-            ptr++;
-        }
-
-        const char *value_start = ptr;
-        while (*ptr != ',' && *ptr != '}' && *ptr != '\0') {  // Added a check for end of string
-            ptr++;
-        }
-
-        char value[256];
-        strncpy(value, value_start, ptr - value_start);
-        value[ptr - value_start] = '\0';
-
-        if (!is_valid_value(value)) {
-            return false;
-        }
-
-        while (isspace(*ptr)) {
-            ptr++;
-        }
-
-        if (*ptr == ',') {
-            ptr++;
-            while (isspace(*ptr)) {
-                ptr++;
-            }
-            if (*ptr == '}') {  // Added a check for trailing comma
-                return false;
-            }
-        } else if (*ptr == '}') {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    return false;
+    return *ptr == '\0';
 }
 
 void print_validation_result(bool is_valid) {
@@ -147,4 +251,4 @@ void print_validation_result(bool is_valid) {
     } else {
         printf("Invalid JSON\n");
     }
-} 
+}

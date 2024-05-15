@@ -2,6 +2,26 @@
 #include <stdbool.h>
 #include"json_parser.h"
 
+void test_valid_json_object_with_object_value() {
+    const char *json = "{\"key\": {} }";
+    bool is_valid = is_valid_json(json);
+    if (is_valid) {
+        printf("Test passed: Valid JSON object with object value\n");
+    } else {
+        printf("Test failed: Vaild JSON object with object value\n");
+    } 
+} 
+
+void test_valid_json_object_with_array_value() {
+    const char *json = "{\"key\": [] }";
+    bool is_valid = is_valid_json(json);
+    if (is_valid) {
+        printf("Test passed: Valid JSON object with object value\n");
+    } else {
+        printf("Test failed: Vaild JSON object with array value\n");
+    } 
+} 
+
 void test_valid_empty_object() {
     const char *json = "{}";
     bool is_valid = is_valid_json(json);
@@ -120,5 +140,7 @@ int main() {
     test_invalid_json_object_missing_value();
     test_invalid_json_object_missing_colon();
     test_valid_json_object_with_different_value_types();
+    test_valid_json_object_with_object_value();
+    test_valid_json_object_with_array_value();
     return 0;
 } 
