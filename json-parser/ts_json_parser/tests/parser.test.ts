@@ -39,4 +39,51 @@ describe('JSON Parser', () => {
         const result = parseJson(validJson);
         expect(result).toBe(true);
     });
+
+    it('should parse a valid JSON object with an object value', () => {
+        const validJson = `{
+            "key": "value",
+            "nested": {
+                "key": "value"
+            }
+        }`;
+
+        const result = parseJson(validJson);
+        expect(result).toBe(true);
+    });
+
+
+    it('should parse a valid JSON object with an array value', () => {
+        const validJson = `{
+            "key": "value",
+            "array": [1, 2, 3]
+        }`;
+
+        const result = parseJson(validJson);
+        expect(result).toBe(true);
+    });
+
+    it('should parse a valid JSON object with nested object and array values', () => {
+        const validJson = `{
+            "key": "value",
+            "nested": {
+                "key": "value",
+                "array": [1, 2, 3]
+            }
+        }`;
+
+        const result = parseJson(validJson);
+        expect(result).toBe(true);
+    });
+
+    it('should parse a valid JSON object with empty object and array values', () => {
+        const validJson = `{
+            "key": "value",
+            "empty_object": {},
+            "empty_array": []
+        }`;
+
+        const result = parseJson(validJson);
+        expect(result).toBe(true);
+    });
 });

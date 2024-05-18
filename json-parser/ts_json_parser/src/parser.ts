@@ -5,7 +5,7 @@ export function parseJson(input: string): boolean {
         while (index < input.length && /\s/.test(input[index])) {
             index++;
         }
-    } 
+    }
 
     function consumeChar(char: string): boolean {
         consumeWhitespace();
@@ -27,6 +27,10 @@ export function parseJson(input: string): boolean {
             return parseNull();
         } else if (/[-0-9]/.test(input[index])) {
             return parseNumber();
+        } else if (input[index] === '{') {
+            return parseObject();
+        } else if (input[index] === '[') {
+            return parseArray();
         }
 
         return false;
@@ -73,6 +77,9 @@ export function parseJson(input: string): boolean {
             return false;
         }
         while (index < input.length && input[index] !== '"') {
+            if (input[index] === '\\') {
+                index++;
+            }
             index++;
         }
         if (!consumeChar('"')) {
@@ -81,14 +88,50 @@ export function parseJson(input: string): boolean {
         return true;
     }
 
+    function parseArray(): boolean {
+        if (!consumeChar('[')) {
+            return false;
+        }
+
+        consumeWhitespace();
+
+        if (consumeChar(']')) {
+            return true;
+        }
+
+        while (true) {
+            if (!parseValue()) {
+                return false;
+            }
+
+            consumeWhitespace();
+
+            if (!consumeChar(',')) {
+                break;
+            }
+
+            consumeWhitespace();
+        }
+
+        if (!consumeChar(']')) {
+            return false;
+        }
+
+        return true;
+    }
+
     function parseKeyValuePair(): boolean {
         if (!parseString()) {
             return false;
         }
 
+        consumeWhitespace();
+
         if (!consumeChar(':')) {
             return false;
         }
+
+        consumeWhitespace();
 
         if (!parseValue()) {
             return false;
@@ -108,14 +151,20 @@ export function parseJson(input: string): boolean {
             return true;
         }
 
-        if (!parseKeyValuePair()) {
-            return false;
-        }
-        while (consumeChar(',')) {
+        while (true) {
             if (!parseKeyValuePair()) {
                 return false;
             }
+
+            consumeWhitespace();
+
+            if (!consumeChar(',')) {
+                break;
+            }
+
+            consumeWhitespace();
         }
+
         if (!consumeChar('}')) {
             return false;
         }
@@ -124,4 +173,4 @@ export function parseJson(input: string): boolean {
     }
 
     return parseObject();
-} 
+}
