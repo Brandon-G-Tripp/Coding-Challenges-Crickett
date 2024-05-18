@@ -47,3 +47,63 @@ def test_parse_valid_object_with_different_value_types():
     }'''
 
     assert parse_json(valid_json) == True
+
+
+def test_parse_valid_object_with_object_value():
+    valid_json = '''{
+        "key": "value",
+        "nested": {
+            "key": "value"
+        }
+    }'''
+
+    assert parse_json(valid_json) == True
+
+
+def test_parse_valid_object_with_array_value():
+    valid_json = '''{
+        "key": "value",
+        "array": [1, 2, 3]
+    }'''
+
+    assert parse_json(valid_json) == True
+
+
+def test_parse_valid_object_with_nested_object_and_array():
+    valid_json = '''{
+        "key": "value",
+        "nested": {
+            "key": "value",
+            "array": [1, 2, 3]
+        }
+    }'''
+
+    assert parse_json(valid_json) == True
+
+
+def test_parse_valid_object_with_empty_object_and_array():
+    valid_json = '''{
+        "key": "value",
+        "empty_object": {},
+        "empty_array": []
+    }'''
+
+    assert parse_json(valid_json) == True
+
+
+def test_parse_invalid_object_with_missing_comma():
+    invalid_json = '''{
+        "key": "value"
+        "another_key": "value"
+    }'''
+
+    assert parse_json(invalid_json) == False
+
+
+def test_parse_invalid_array_with_missing_comma():
+    invalid_json = '''{
+        "key": "value",
+        "array": [1 2 3]
+    }'''
+
+    assert parse_json(invalid_json) == False

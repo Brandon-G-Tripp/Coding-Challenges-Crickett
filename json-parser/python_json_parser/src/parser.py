@@ -24,6 +24,10 @@ def parse_json(input_string):
             return parse_null()
         elif input_string[index].isdigit() or input_string[index] == '-':
             return parse_number()
+        elif input_string[index] == '{':
+            return parse_object()
+        elif input_string[index] == '[':
+            return parse_array()
         return False
 
     def parse_boolean():
@@ -77,25 +81,49 @@ def parse_json(input_string):
             return False
         return True
 
+    def parse_array():
+        if not consume_char('['):
+            return False
+        consume_whitespace()
+        if consume_char(']'):
+            return True
+        while True:
+            if not parse_value():
+                return False
+            consume_whitespace()
+            if not consume_char(','):
+                break
+        if not consume_char(']'):
+            return False
+        return True
+            
+
+    def parse_key_value_pair():
+        if not parse_string():
+            return False
+        consume_whitespace()
+        if not consume_char(':'):
+            return False
+        consume_whitespace()
+        if not parse_value():
+            return False
+        return True
+
     def parse_object():
         if not consume_char('{'):
             return False
         consume_whitespace()
         if consume_char('}'):
-            consume_whitespace()
-            return index == len(input_string)
-        if not parse_key_value_pair():
-            return False
-        consume_whitespace()
-        while consume_char(','):
-            consume_whitespace()
+            return True
+        while True:
             if not parse_key_value_pair():
                 return False
             consume_whitespace()
-        consume_whitespace()
+            if not consume_char(','):
+                break
+            consume_whitespace()
         if not consume_char('}'):
             return False
-        consume_whitespace()
-        return index == len(input_string)
+        return True
 
     return parse_object()
