@@ -1,41 +1,45 @@
-let parse_json input_string = 
+let parse_json input_string =
+    Printf.printf "Parsing JSON: %s\n" input_string;
     let index = ref 0 in
-    let len = String.length input_string in 
+    let len = String.length input_string in
 
-    let consume_whitespace () = 
-        while !index < len && String.contains " \t\n\r" input_string.[!index] do 
+    let consume_whitespace () =
+        while !index < len && String.contains " \t\n\r" input_string.[!index] do
             incr index
         done
     in
 
-    let consume_char expected_char =        
+    let consume_char expected_char =
         consume_whitespace ();
         if !index < len && input_string.[!index] = expected_char then (
             incr index;
             true
-        ) else 
+        ) else
             false
     in
 
     let parse_string () =
         if not (consume_char '"') then false
         else (
-            while !index < len && input_string.[!index] <> '"' do 
+            while !index < len && input_string.[!index] <> '"' do
                 if input_string.[!index] = '\\' then incr index;
                 incr index
             done;
-            consume_char '"'
+            if !index < len then (
+                incr index;
+                true
+            ) else
+                false
         )
     in
 
-
-    let parse_number () = 
+    let parse_number () =
         let start_index = !index in
         let is_valid = ref true in
         if consume_char '-' then ();
         if not (consume_char '0') then (
             if !index < len && input_string.[!index] >= '1' && input_string.[!index] <= '9' then
-                while !index < len && input_string.[!index] >= '0' && input_string.[!index] <= '9' do 
+                while !index < len && input_string.[!index] >= '0' && input_string.[!index] <= '9' do
                     incr index
                 done
             else
@@ -44,7 +48,7 @@ let parse_json input_string =
         if !index < len && input_string.[!index] = '.' then (
             incr index;
             if !index < len && input_string.[!index] >= '0' && input_string.[!index] <= '9' then
-                while !index < len && input_string.[!index] >= '0' && input_string.[!index] <= '9' do 
+                while !index < len && input_string.[!index] >= '0' && input_string.[!index] <= '9' do
                     incr index
                 done
             else
@@ -54,8 +58,8 @@ let parse_json input_string =
             incr index;
             if !index < len && (input_string.[!index] = '+' || input_string.[!index] = '-') then
                 incr index;
-            if !index <len && input_string.[!index] >= '0' && input_string.[!index] <= '9' then
-                while !index < len && input_string.[!index] >= '0' && input_string.[!index] <= '9' do 
+            if !index < len && input_string.[!index] >= '0' && input_string.[!index] <= '9' then
+                while !index < len && input_string.[!index] >= '0' && input_string.[!index] <= '9' do
                     incr index
                 done
             else
@@ -64,50 +68,87 @@ let parse_json input_string =
         !is_valid && !index > start_index
     in
 
-    let parse_value () = 
+    let rec parse_array () =
+        Printf.printf "parsing value at index %d\n" !index;
+        consume_whitespace ();
+        if consume_char '[' then (
+            consume_whitespace ();
+            if consume_char ']' then true
+            else (
+                let rec parse_array_elements () =
+                    let success = parse_value () in
+                    consume_whitespace ();
+                    if success then (
+                        if consume_char ',' then (
+                            consume_whitespace ();
+                            parse_array_elements ()
+                        ) else (
+                            consume_char ']'
+                        )
+                    ) else
+                        false
+                in
+                parse_array_elements ()
+            )
+        ) else
+            false
+
+    and parse_value () =
+        Printf.printf "parsing value at index %d\n" !index;
         consume_whitespace ();
         if !index < len then
-            match input_string.[!index] with 
+            match input_string.[!index] with
             | '"' -> parse_string ()
             | 't' -> consume_char 't' && consume_char 'r' && consume_char 'u' && consume_char 'e'
             | 'f' -> consume_char 'f' && consume_char 'a' && consume_char 'l' && consume_char 's' && consume_char 'e'
             | 'n' -> consume_char 'n' && consume_char 'u' && consume_char 'l' && consume_char 'l'
             | '-' | '0'..'9' -> parse_number ()
+            | '[' -> parse_array ()
+            | '{' -> parse_object ()
             | _ -> false
         else
             false
-    in
 
-    let parse_key_value_pair () = 
+    and parse_key_value_pair () =
         if not (parse_string ()) then false
-        else if not (consume_char ':') then false
-        else parse_value ()
-    in
-
-
-    let rec parse_pairs () = 
-        consume_whitespace ();
-        if consume_char '}' then true
-        else if not (parse_key_value_pair ()) then false
         else (
             consume_whitespace ();
-            if consume_char ',' then (
+            if not (consume_char ':') then false
+            else (
                 consume_whitespace ();
-                if consume_char '}' then false
-                else parse_pairs ()
-            ) else
-                consume_char '}'
+                parse_value ()
+            )
         )
+
+    and parse_object () =
+        Printf.printf "parsing value at index %d\n" !index;
+        consume_whitespace ();
+        if consume_char '{' then (
+            consume_whitespace ();
+            if consume_char '}' then true
+            else (
+                let rec parse_object_elements () =
+                    if not (parse_key_value_pair ()) then false
+                    else (
+                        consume_whitespace ();
+                        if consume_char ',' then (
+                            consume_whitespace ();
+                            parse_object_elements ()
+                        ) else (
+                            consume_char '}'
+                        )
+                    )
+                in
+                parse_object_elements ()
+            )
+        ) else
+            false
     in
 
-    if not (consume_char '{') then false 
+    let result = parse_value () in
+    consume_whitespace ();
+    if result && !index = len then true
     else (
-        if parse_pairs () then (
-            consume_whitespace ();
-            !index = len
-        ) else 
-            false
+        consume_whitespace ();
+        !index = len
     )
-
-
-
