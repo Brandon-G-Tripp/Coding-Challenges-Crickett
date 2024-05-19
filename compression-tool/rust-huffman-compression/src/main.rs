@@ -1,6 +1,10 @@
+mod huffman_tree;
+
 use std::env;
 use std::{collections::HashMap, fs::File};
 use std::io::{Read};
+
+use crate::huffman_tree::{Node, traverse_tree};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -14,6 +18,10 @@ fn main() {
         Ok(contents) => {
             let frequencies = count_character_frequencies(&contents);
             println!("Character frequencies: {:?}", frequencies);
+
+            let huffman_tree = Node::build_huffman_tree(&frequencies);
+            println!("Huffman tree: {:?}", huffman_tree);
+            traverse_tree(&huffman_tree, 0);
         }
         Err(e) => {
             eprintln!("Error reading file: {}", e);
@@ -36,6 +44,8 @@ pub fn count_character_frequencies(input: &str) -> HashMap<char, usize> {
     }
     frequencies
 }
+
+
 
 #[cfg(test)]
 mod tests {
