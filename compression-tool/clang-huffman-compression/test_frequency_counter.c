@@ -109,10 +109,3 @@ void test_count_character_frequencies_from_file() {
     printf("Test passed test_count_character_frequency_non_ascii\n");
 }
 
-int main() {
-    test_count_character_frequency();
-    test_count_character_frequency_empty_string();
-    test_count_character_frequency_non_ascii();
-    test_count_character_frequencies_from_file();
-    return 0;
-}
