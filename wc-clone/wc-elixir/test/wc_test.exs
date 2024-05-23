@@ -3,6 +3,15 @@ defmodule WcTest do
   import ExUnit.CaptureIO
   doctest Wc
 
+  test "main/1 reads from standard input when no filename is provided" do 
+    content = "Line 1\nLine 2\nLine 3\n"
+    expected_output = "3 6 21\n"
+
+    assert capture_io(content, fn ->
+      Wc.main([])
+    end) == expected_output
+  end
+
   test "main/1 counts lines, words, and bytes when no option is provided" do 
     content = "Line 1\nLine 2\nLine 3\n"
     file_name = "test.txt"

@@ -9,16 +9,14 @@ defmodule Wc do
 
     case {opts, file_names} do
       {[], []} ->
-        IO.puts(:stderr, "Usage: wc [-c] [-l] [-w] [-m] <file>")
-        System.halt(1)
+        process_input(:stdio, opts)
 
       {opts, []} ->
-        IO.puts(:stderr, "Usage: wc [-c] [-l] [-w] [-m]  <file>")
-        System.halt(1)
+        process_input(:stdio, opts)
 
       {[], [file_name]} -> 
         case default_count(file_name) do
-          {:ok, line_count, word_count, byte_count} ->
+          {:ok, [line_count, word_count, byte_count]} ->
             IO.puts("#{line_count} #{word_count} #{byte_count} #{file_name}")
           {:error, _} ->
             IO.puts(:stderr, "Error: Could not open file '#{file_name}'")
@@ -70,53 +68,88 @@ defmodule Wc do
     end
   end
 
-  defp default_count(file_name) do
-    with {:ok, line_count} <- count_lines(file_name),
-      {:ok, word_count} <- count_words(file_name),
-      {:ok, byte_count} <- count_bytes(file_name) do
-      {:ok, line_count, word_count, byte_count}
-    else
-    {:error,_} -> {:error, :file_not_found}
+  defp default_count(input) do
+    case input do 
+      :stdio -> 
+        content = IO.read(:stdio, :all)
+        line_count = content |> String.split("\n", trim: true) |> length()
+        word_count = content |> String.split() |> length()
+        byte_count = byte_size(content)
+        {:ok, [line_count, word_count, byte_count]}
+      file_name -> 
+        case File.read(file_name) do 
+          {:ok, content} -> 
+            line_count = content |> String.split("\n", trim: true) |> length()
+            word_count = content |> String.split() |> length()
+            byte_count = byte_size(content)
+            {:ok, [line_count, word_count, byte_count]}
+          {:error, _ } ->
+            {:error, :file_not_found}
+        end
     end
   end
 
   def count_bytes(file_name) do
-    try do
-      content = File.read!(file_name)
-      {:ok, byte_size(content)}
-    rescue
-      File.Error -> {:error, :file_not_found}
+    case File.read(file_name) do
+      {:ok, content} -> {:ok, byte_size(content)}
+      {:error, _} -> {:error, :file_not_found}
     end
   end
 
   def count_lines(file_name) do
-    try do
-      count = File.stream!(file_name)
-              |> Enum.count()
-      {:ok, count}
-    rescue
-      File.Error -> {:error, :file_not_found}
+    case File.read(file_name) do
+      {:ok, content} ->
+        {:ok, content |> String.trim() |> String.split("\n") |> length()}
+      {:error, _} ->
+        {:error, :file_not_found}
     end
   end
 
-  def count_words(file_name) do 
-    try do 
-      count = File.stream!(file_name)
-        |> Stream.map(&String.split/1)
-        |> Stream.map(&length/1)
-        |> Enum.sum()
-      {:ok, count}
-    rescue
-      File.Error -> {:error, :file_not_found}
+  def count_words(file_name) do
+    case File.read(file_name) do
+      {:ok, content} ->
+        {:ok, content |> String.split() |> length()}
+      {:error, _} ->
+        {:error, :file_not_found}
     end
   end
 
-  def count_chars(file_name) do 
-    try do 
-      content = File.read!(file_name)
-      {:ok, String.length(content)}
-    rescue
-    File.Error -> {:error, :file_not_found}
+  def count_chars(file_name) do
+    case File.read(file_name) do
+      {:ok, content} -> {:ok, String.length(content)}
+      {:error, _} -> {:error, :file_not_found}
     end
   end
+
+  defp process_input(:stdio, opts) do
+    input = IO.read(:stdio, :all)
+
+    result =
+      cond do
+        opts[:bytes] -> {:ok, byte_size(input)}
+        opts[:lines] -> {:ok, input |> String.split("\n") |> length()}
+        opts[:words] -> {:ok, input |> String.split() |> length()}
+        opts[:chars] -> {:ok, String.length(input)}
+        true ->
+          line_count = input |> String.trim() |> String.split("\n") |> length()
+          word_count = input |> String.trim() |> String.split() |> length()
+          byte_count = byte_size(input)
+          {:ok, [line_count, word_count, byte_count]}
+      end
+
+    case result do
+      {:ok, [line_count, word_count, byte_count]} ->
+        IO.puts("#{line_count} #{word_count} #{byte_count}")
+      {:ok, counts} ->
+        case counts do
+          [line_count, word_count, byte_count] ->
+            IO.puts("#{line_count} #{word_count} #{byte_count}")
+          count ->
+            IO.puts(count)
+        end
+      {:error, _} ->
+        System.halt(1)
+    end
+  end
+
 end
