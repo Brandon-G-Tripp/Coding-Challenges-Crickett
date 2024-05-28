@@ -1,0 +1,3 @@
+(test
+  (name cut_test)
+  (libraries cut ounit2))
