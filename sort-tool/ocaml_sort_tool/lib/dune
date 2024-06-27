@@ -1,0 +1,3 @@
+(library
+  (name ocaml_sort_tool)
+  (public_name ocaml_sort_tool))

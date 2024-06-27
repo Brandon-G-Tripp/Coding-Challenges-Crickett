@@ -1,0 +1,14 @@
+(lang dune 2.9)
+(name ocaml_sort_tool)
+(version 0.1.0)
+
+(generate_opam_files true)
+
+(package
+  (name ocaml_sort_tool)
+  (synopsis "A simple sort tool")
+  (description "A command-line tool to sort files")
+  (depends
+    (ocaml (>= 5.1.1))
+    (dune (>= 3.13))
+    (ounit2 :with-test)))

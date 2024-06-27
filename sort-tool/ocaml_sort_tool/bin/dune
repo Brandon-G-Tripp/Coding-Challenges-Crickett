@@ -1,0 +1,4 @@
+(executable
+  (name main)
+  (public_name ocaml_sort_tool)
+  (libraries ocaml_sort_tool))
