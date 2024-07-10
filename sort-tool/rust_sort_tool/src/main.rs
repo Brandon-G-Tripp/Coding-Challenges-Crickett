@@ -1,13 +1,22 @@
 use std::env;
 use std::io;
+use std::io::Write;
 use std::path::Path;
 
 mod sort;
+mod algorithms;
 
 fn main() -> io::Result<()> {
-    let args: Vec<String> = env::args().collect();
+    let mut args: Vec<String> = env::args().collect();
+    let mut deduplicate = false;
+
+    if args.len() > 1 && args[1] == "-u" {
+        deduplicate = true;
+        args.remove(1); // Remove the "-u" option from args
+    }
+
     if args.len() != 2 {
-        eprintln!("Usage: {} <filename>", args[0]);
+        eprintln!("Usage: {} [-u] <filename>", args[0]);
         std::process::exit(1);
     }
 
@@ -19,10 +28,13 @@ fn main() -> io::Result<()> {
         path.to_path_buf()
     };
 
-    let sorted_lines = sort::sort_file(absolute_path.to_str().unwrap())?;
+    let sorted_lines = sort::sort_file(absolute_path.to_str().unwrap(), deduplicate)?;
 
+    let stdout = io::stdout();
+    let mut handle = stdout.lock();
     for line in sorted_lines {
-        println!("{}", line);
+        handle.write_all(line.as_bytes())?;
+        handle.write_all(b"\n")?;
     }
 
     Ok(())
@@ -41,9 +53,13 @@ mod tests {
             .output()?;
 
         let cli_output = String::from_utf8(output.stdout)?;
-        let piped_output = Command::new("sh")
-            .arg("-c")
-            .arg(&format!("echo '{}' | uniq | head -n10", cli_output))
+
+        // Write the sorted lines to a temporary file
+        let temp_file = tempfile::NamedTempFile::new()?;
+        std::fs::write(temp_file.path(), cli_output)?;
+
+        let piped_output = Command::new("uniq")
+            .arg(temp_file.path())
             .output()?;
 
         let stdout = String::from_utf8(piped_output.stdout)?;
@@ -65,11 +81,6 @@ mod tests {
         let actual_lines: Vec<_> = lines.iter().take(10).copied().collect();
 
         assert_eq!(actual_lines, expected_lines, "The first 5 lines do not match the expected output");
-
-        println!("First five lines of output");
-        for line in actual_lines {
-            println!("{}", line);
-        }
 
         Ok(())
     }
