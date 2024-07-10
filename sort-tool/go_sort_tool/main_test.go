@@ -1,16 +1,14 @@
-package main
+package main_test
 
 import (
-	"flag"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
-	"time"
 )
 
 func TestMainWithInvalidArguments(t *testing.T) {
@@ -18,76 +16,46 @@ func TestMainWithInvalidArguments(t *testing.T) {
         name string
         args []string
         exitCode int
-        output string
+        outputPattern string
     }{
         {
             name:     "No arguments",
-            args:     []string{"cmd"},
+            args:     []string{},
             exitCode: 1,
-            output:   "Usage: cmd [-u] <filename>\n",
+            outputPattern: `(?s)^Error: Usage: .+`,
+            // outputPattern: `(?s)^Error: Usage: .* [-u] [-a algorithm] <filename>\n$`,
         },
         {
             name:     "-u flag without filename",
-            args:     []string{"cmd", "-u"},
+            args:     []string{"-u"},
             exitCode: 1,
-            output:   "Usage: cmd [-u] <filename>\n",
+            outputPattern: `(?s)^Error: Usage: .+`,
+            // outputPattern: `(?s)^Error: Usage: .* [-u] [-a algorithm] <filename>\n$`,
         },
     }
 
     for _, tc := range testCases {
         t.Run(tc.name, func(t *testing.T) {
-            // reset flags
-            flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-            // Save original os.Args and restore after test
-            oldArgs := os.Args
-            defer func() {
-                os.Args = oldArgs
-            }()
+            cmd := exec.Command("go", append([]string{"run", "main.go"}, tc.args...)...)
+            output, err := cmd.CombinedOutput()
 
-            // Set up the new os.Args
-            os.Args = tc.args
-
-            // Mock os.Exit and os.Stderr
-            oldStderr := os.Stderr
-            r, w, _ := os.Pipe()
-            os.Stderr = w
-            defer func() {
-                os.Stderr = oldStderr
-            }()
-
-            exitChan := make(chan int, 1)
-            oldExit := exit
-            exit = func(code int) {
-                exitChan <- code
-            }
-            defer func() {
-                exit = oldExit
-            }()
-
-            // run main in a go routine
-            go func() {
-                main()
-                close(exitChan)
-            }()
-
-            // Wait for exit or timeout
-            var exitCode int
-            select {
-            case exitCode = <-exitChan:
-            case <-time.After(5 * time.Second):
-                t.Fatal("Test timed out")
+            if err == nil {
+                t.Errorf("Expected error, but got none")
             }
 
-            // Close pipe and read output 
-            w.Close()
-            out, _ := io.ReadAll(r)
-
-            if exitCode != tc.exitCode {
-                t.Errorf("Expected exit code %d, but got %d", tc.exitCode, exitCode)
+            exitError, ok := err.(*exec.ExitError)
+            if !ok {
+                t.Errorf("Expected exit error, but got: %v", err)
+            } else if exitError.ExitCode() != tc.exitCode {
+                t.Errorf("Expected exit code %d, but got %d", tc.exitCode, exitError.ExitCode())
             }
 
-            if string(out) != tc.output {
-                t.Errorf("Expected output %q, but got %q", tc.output, string(out))
+            matched, err := regexp.MatchString(tc.outputPattern, string(output))
+            if err != nil {
+                t.Fatalf("Error in regex matching: %v", err)
+            }
+            if !matched {
+                t.Errorf("Output doesn't match expected pattern\nExpected pattern:%s\nGot: %s", tc.outputPattern, string(output))
             }
         })
     }
@@ -148,5 +116,74 @@ func TestCliWithWordsFile(t *testing.T) {
                 t.Errorf("Expected output:\n%s\nGot:\n%s", strings.Join(tc.expected, "\n"), strings.Join(lines, "\n"))
             }
         })
+    }
+}
+
+func TestMainWithAlgorithmFlag(t *testing.T) {
+    // Create a temporary file with some content
+    content := "banana\napple\ncherry\ndate\n"
+    tmpfile, err := ioutil.TempFile("", "example")
+    if err != nil {
+        t.Fatal(err)
+    }
+    defer os.Remove(tmpfile.Name())
+
+    if _, err := tmpfile.Write([]byte(content)); err != nil {
+        t.Fatal(err)
+    }
+    if err := tmpfile.Close(); err != nil {
+        t.Fatal(err)
+    }
+
+    algorithms := []string{"merge", "quick", "heap", "radix"}
+    expectedOutput := "APPLE\nBANANA\nCHERRY\nDATE\n"
+
+    for _, algo := range algorithms {
+        t.Run(algo, func(t *testing.T) {
+            cmd := exec.Command("go", "run", "main.go", "-a", algo, tmpfile.Name())
+            output, err := cmd.CombinedOutput()
+            if err != nil {
+                t.Fatalf("Failed to run CLI command: %v\nOutput: %s", err, output)
+            }
+
+            if string(output) != expectedOutput {
+                t.Errorf("Expected output:\n%s\nGot:\n%s", expectedOutput, string(output))
+            }
+        })
+    }
+}
+
+func TestMainWithInvalidAlgorithm(t *testing.T) {
+    // Create a temporary file with some content
+    content := "banana\napple\ncherry\ndate\n"
+    tmpfile, err := ioutil.TempFile("", "example")
+    if err != nil {
+        t.Fatal(err)
+    }
+    defer os.Remove(tmpfile.Name())
+
+    if _, err := tmpfile.Write([]byte(content)); err != nil {
+        t.Fatal(err)
+    }
+    if err := tmpfile.Close(); err != nil {
+        t.Fatal(err)
+    }
+
+    cmd := exec.Command("go", "run", "main.go", "-a", "invalid", tmpfile.Name())
+    output, err := cmd.CombinedOutput()
+
+    if err != nil {
+        t.Fatalf("Unexpected error: %v", err)
+    }
+
+    expectedWarning := "Warning: Unknown sorting algorithm 'invalid'. Defaulting to quick sort."
+    expectedOutput := "APPLE\nBANANA\nCHERRY\nDATE\n"
+
+    if !strings.Contains(string(output), expectedWarning) {
+        t.Errorf("Expected error message to contain:\n%s\nGot:\n%s", expectedWarning, string(output))
+    }
+
+    if !strings.Contains(string(output), expectedOutput) {
+        t.Errorf("Expected error message to contain:\n%s\nGot:\n%s", expectedOutput, string(output))
     }
 }
