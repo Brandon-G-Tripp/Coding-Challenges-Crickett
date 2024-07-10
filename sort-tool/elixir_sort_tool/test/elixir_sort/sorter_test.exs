@@ -18,4 +18,24 @@ defmodule ElixirSort.SorterTest do
 
     File.rm!(filename)
   end
+
+  test "sort_file with unique flag removes duplicates" do 
+    input = """
+    banana
+    apple
+    cherry
+    apple
+    banana
+    """
+
+    filename = "test_input_unique.txt"
+    File.write!(filename, input)
+
+    result = Sorter.sort_file(filename, unique: true)
+
+    expected = ["apple", "banana", "cherry"]
+    assert result == expected
+
+    File.rm!(filename)
+  end
 end
