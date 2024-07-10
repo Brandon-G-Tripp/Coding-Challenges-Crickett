@@ -1,22 +1,30 @@
 package main
 
 import (
-    "fmt"
-    "os"
-    "go_sort_tool/sorter"
+	"flag"
+	"fmt"
+	"go_sort_tool/sorter"
+	"os"
 )
 
 var exit = os.Exit
 
 func main() {
-    if len(os.Args) != 2 {
-        fmt.Fprintf(os.Stderr, "Usage: %s <filename>\n", os.Args[0])
+    flag.Usage = func() {
+        fmt.Fprintf(os.Stderr, "Usage: %s [-u] <filename>\n", os.Args[0])
+    }
+    uniqueFlag := flag.Bool("u", false, "Remove duplicate lines")
+    flag.Parse()
+
+    args := flag.Args()
+    if len(args) != 1 {
+        flag.Usage()
         exit(1)
-        return 
+        return
     }
 
-    filename := os.Args[1]
-    sortedLines, err := sorter.SortFile(filename)
+    filename := args[0]
+    sortedLines, err := sorter.SortFile(filename, *uniqueFlag)
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error: %v\n", err)
         exit(1)

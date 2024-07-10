@@ -1,143 +1,152 @@
 package main
 
 import (
-	"bytes"
+	"flag"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 )
 
-func TestCliWithWordsFile(t *testing.T) {
-    filename := "../words.txt"
-
-    // check if the file exists
-    if _, err := os.Stat(filename); os.IsNotExist(err) {
-        t.Fatalf("words.txt file not found in the parent directory. Please ensure it is created before running the test.")
+func TestMainWithInvalidArguments(t *testing.T) {
+    testCases := []struct {
+        name string
+        args []string
+        exitCode int
+        output string
+    }{
+        {
+            name:     "No arguments",
+            args:     []string{"cmd"},
+            exitCode: 1,
+            output:   "Usage: cmd [-u] <filename>\n",
+        },
+        {
+            name:     "-u flag without filename",
+            args:     []string{"cmd", "-u"},
+            exitCode: 1,
+            output:   "Usage: cmd [-u] <filename>\n",
+        },
     }
 
-    // run the CLI command
-    cmd := exec.Command("go", "run", "main.go", filename)
-    var out bytes.Buffer
-    cmd.Stdout = &out
+    for _, tc := range testCases {
+        t.Run(tc.name, func(t *testing.T) {
+            // reset flags
+            flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+            // Save original os.Args and restore after test
+            oldArgs := os.Args
+            defer func() {
+                os.Args = oldArgs
+            }()
 
-    err := cmd.Run()
-    if err != nil {
-        t.Fatalf("Failed to run CLI command: %v", err)
-    }
+            // Set up the new os.Args
+            os.Args = tc.args
 
-    // Pipe the output through uniq and head
-    uniqCmd := exec.Command("uniq")
-    uniqCmd.Stdin = strings.NewReader(out.String())
-    var uniqOut bytes.Buffer
-    uniqCmd.Stdout = &uniqOut
+            // Mock os.Exit and os.Stderr
+            oldStderr := os.Stderr
+            r, w, _ := os.Pipe()
+            os.Stderr = w
+            defer func() {
+                os.Stderr = oldStderr
+            }()
 
-    err = uniqCmd.Run() 
-    if err != nil {
-        t.Fatalf("Failed to run uniq command: %v", err)
-    }
+            exitChan := make(chan int, 1)
+            oldExit := exit
+            exit = func(code int) {
+                exitChan <- code
+            }
+            defer func() {
+                exit = oldExit
+            }()
 
-    headCmd := exec.Command("head", "-n", "10")
-    headCmd.Stdin = strings.NewReader(uniqOut.String())
-    var headOut bytes.Buffer
-    headCmd.Stdout = &headOut
+            // run main in a go routine
+            go func() {
+                main()
+                close(exitChan)
+            }()
 
-    err = headCmd.Run()
-    if err != nil {
-        t.Fatalf("Failed to run head command: %v", err)
-    }
+            // Wait for exit or timeout
+            var exitCode int
+            select {
+            case exitCode = <-exitChan:
+            case <-time.After(5 * time.Second):
+                t.Fatal("Test timed out")
+            }
 
-    lines := strings.Split(strings.TrimSpace(headOut.String()), "\n")
+            // Close pipe and read output 
+            w.Close()
+            out, _ := io.ReadAll(r)
 
-    // Check the first ten lines
-    expectedLines := []string{
-         "A",
-        "ABACK",
-        "ABANDON",
-        "ABANDONED",
-        "ABATED",
-        "ABBREVIATED",
-        "ABEYANCE",
-        "ABIDE",
-        "ABILITY",
-        "ABLE",
-    }
+            if exitCode != tc.exitCode {
+                t.Errorf("Expected exit code %d, but got %d", tc.exitCode, exitCode)
+            }
 
-    if len(lines) != len(expectedLines) {
-        t.Fatalf("Expected %d lines, got %d", len(expectedLines), len(lines))
-    }
-
-    for i, line := range lines {
-        if line != expectedLines[i] {
-            t.Errorf("Line %d: expected '%s', got '%s'", i+1, expectedLines[i], line)
-        }
-    }
-
-    // Print the first 10 lines for debugging
-    t.Log("First 10 lines of output:")
-    for _, line := range lines {
-        t.Log(line)
+            if string(out) != tc.output {
+                t.Errorf("Expected output %q, but got %q", tc.output, string(out))
+            }
+        })
     }
 }
 
-func TestMainWithInvalidArguments(t *testing.T) {
-    // Save original os.Args
-    oldArgs := os.Args
-    defer func() { 
-        os.Args = oldArgs 
-    }()
-
-    // Set up the new os.Args
-    os.Args = []string{"cmd"}
-
-    // Mock os.Exit
-    oldStderr := os.Stderr
-    r, w, _ := os.Pipe()
-    os.Stderr = w
-    defer func() {
-        os.Stderr = oldStderr
-    }()
-
-    // Use a channel to communicate exit status
-    exitChan := make(chan int, 1)
-
-    oldExit := exit
-    exit = func(code int) {
-        exitChan <- code
-    }
-    defer func() {
-        exit = oldExit
-    }()
-
-    // Run main in a goroutine
-    go func() {
-        main()
-        close(exitChan)
-    }()
-
-    // Wait for exit or timeout
-    var exitCode int
-    select {
-        case exitCode = <-exitChan:
-        case <-time.After(5 * time.Second):
-            t.Fatal("Test timed out")
+func TestCliWithWordsFile(t *testing.T) {
+    dir, err := os.Getwd()
+    if err != nil {
+        t.Fatalf("Failed to get current working directory: %v", err)
     }
 
-    // Close pipe and read output 
-    w.Close()
-    out, _ := io.ReadAll(r)
+    tmpFile, err := ioutil.TempFile(dir, "words_*.txt")
+    if err != nil {
+        t.Fatalf("Failed to create temp file: %v", err)
+    }
+    defer os.Remove(tmpFile.Name())
 
-    t.Logf("Exit code: %d", exitCode)
-    t.Logf("Stderr output: %q", string(out))
-
-    if exitCode != 1 {
-        t.Errorf("Expected exit code 1, but got %d", exitCode)
+    content := []byte("BANANA\nAPPLE\nCHERRY\nDATE\nBANANA\nAPPLE\n")
+    if _, err := tmpFile.Write(content); err != nil {
+        t.Fatalf("Failed to write to temp file: %v", err)
+    }
+    if err := tmpFile.Close(); err != nil {
+        t.Fatalf("Failed to close temp file: %v", err)
     }
 
-    expected := "Usage: cmd <filename>\n"
-    if string(out) != expected {
-        t.Errorf("Expected output %q, but got %q", expected, string(out))
+    testCases := []struct {
+        name string
+        args []string
+        expected []string
+    }{
+         {
+            name: "Without -u flag",
+            args: []string{filepath.Base(tmpFile.Name())},
+            expected: []string{
+                "APPLE", "APPLE", "BANANA", "BANANA", "CHERRY", "DATE",
+            },
+        },
+        {
+            name: "With -u flag",
+            args: []string{"-u", filepath.Base(tmpFile.Name())},
+            expected: []string{
+                "APPLE", "BANANA", "CHERRY", "DATE",
+            },
+        },
+    }
+
+    for _, tc := range testCases {
+        t.Run(tc.name, func(t *testing.T) {
+            cmd := exec.Command("go", append([]string{"run", "main.go"}, tc.args...)...)
+            cmd.Dir = dir 
+            output, err := cmd.CombinedOutput()
+            if err != nil {
+                t.Fatalf("Failed to run CLI command: %v\nOutput: %s", err, output)
+            }
+
+            lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+            if !reflect.DeepEqual(lines, tc.expected) {
+                t.Errorf("Expected output:\n%s\nGot:\n%s", strings.Join(tc.expected, "\n"), strings.Join(lines, "\n"))
+            }
+        })
     }
 }

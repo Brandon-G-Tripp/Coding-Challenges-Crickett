@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func SortFile(filename string) ([]string, error) {
+func SortFile(filename string, unique bool) ([]string, error) {
     file, err := os.Open(filename)
     if err != nil {
         return nil, err
@@ -26,13 +26,19 @@ func SortFile(filename string) ([]string, error) {
 
     sort.Strings(lines)
 
-    // Remove duplicates
+    if unique {
+        return removeDuplicates(lines), nil
+    }
+
+    return lines, nil
+}
+
+func removeDuplicates(lines []string) []string {
     var uniqueLines []string
     for i, line := range lines {
         if i == 0 || line != lines[i-1] {
             uniqueLines = append(uniqueLines, line)
         }
     }
-
-    return uniqueLines, nil
+    return uniqueLines
 }
