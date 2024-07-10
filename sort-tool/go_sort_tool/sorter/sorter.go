@@ -3,11 +3,12 @@ package sorter
 import (
 	"bufio"
 	"os"
-	"sort"
 	"strings"
+
+    "github.com/Brandon-G-Tripp/go_sort_tool/sorter/algorithms"
 )
 
-func SortFile(filename string, unique bool) ([]string, error) {
+func SortFile(filename string, unique bool, algorithm string) ([]string, error) {
     file, err := os.Open(filename)
     if err != nil {
         return nil, err
@@ -17,14 +18,25 @@ func SortFile(filename string, unique bool) ([]string, error) {
     var lines []string
     scanner := bufio.NewScanner(file)
     for scanner.Scan() {
-        lines = append(lines, strings.ToUpper(strings.TrimSpace(scanner.Text())))
+        line := strings.TrimSpace(strings.ToUpper(scanner.Text()))
+        if line != "" {
+            lines = append(lines, line)
+        }
     }
 
     if err := scanner.Err(); err != nil {
         return nil, err
     }
 
-    sort.Strings(lines)
+    switch algorithm {
+    case "merge":
+        algorithms.MergeSort(lines)
+    case "quick":
+        algorithms.QuickSort(lines)
+    default:
+        // for now, use MergeSort as default
+        algorithms.QuickSort(lines)
+    }
 
     if unique {
         return removeDuplicates(lines), nil

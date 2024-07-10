@@ -1,9 +1,10 @@
 package sorter
 
 import (
-    "os"
-    "reflect"
-    "testing"
+	"io/ioutil"
+	"os"
+	"reflect"
+	"testing"
 )
 
 func TestSortFile(t *testing.T) {
@@ -67,3 +68,22 @@ func TestSortEmptyFile(t *testing.T) {
     }
 }
 
+func TestSortFileWithQuickSort(t *testing.T) {
+    content := "banana\napple\ncherry\ndate\n"
+    filename := "test_quick_sort.txt"
+    err := ioutil.WriteFile(filename, []byte(content), 0644)
+    if err != nil {
+        t.Fatalf("Failed to create test file: %v", err)
+    }
+    defer os.Remove(filename)
+
+    expected := []string{"APPLE", "BANANA", "CHERRY", "DATE"}
+    result, err := SortFile(filename, false, "quick")
+    if err != nil {
+        t.Fatalf("SortFile failed: %v", err)
+    }
+
+    if !reflect.DeepEqual(result, expected) {
+        t.Errorf("SortFile() with quick sort = %v, want %v", result, expected)
+    }
+}
