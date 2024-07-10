@@ -8,63 +8,83 @@ import (
 )
 
 func TestSortFile(t *testing.T) {
-    // Create a temporary file with unsorted content
-    content := []byte("banana\napple\ncherry\nbanana\napple\n")
-    tmpFile, err := os.CreateTemp("", "test")
+    content := "banana\napple\ncherry\napple\nbanana\n"
+    filename := "test_input.txt"
+    err := ioutil.WriteFile(filename, []byte(content), 0644)
     if err != nil {
-        t.Fatal(err)
+        t.Fatalf("Failed to create test file: %v", err)
     }
-    defer os.Remove(tmpFile.Name())
+    defer os.Remove(filename)
 
-    if _, err := tmpFile.Write(content); err != nil {
-        t.Fatal(err)
+    tests := []struct {
+        name        string
+        deduplicate bool
+        algorithm   string
+        expected    []string
+    }{
+        {
+            name:        "No deduplication",
+            deduplicate: false,
+            algorithm:   "quick", // You can choose any default algorithm here
+            expected:    []string{"APPLE", "APPLE", "BANANA", "BANANA", "CHERRY"},
+        },
+        {
+            name:        "With deduplication",
+            deduplicate: true,
+            algorithm:   "quick", // You can choose any default algorithm here
+            expected:    []string{"APPLE", "BANANA", "CHERRY"},
+        },
     }
-    if err := tmpFile.Close(); err != nil {
-        t.Fatal(err)
+
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            result, err := SortFile(filename, tt.deduplicate, tt.algorithm)
+            if err != nil {
+                t.Fatalf("SortFile failed: %v", err)
+            }
+
+            if !reflect.DeepEqual(result, tt.expected) {
+                t.Errorf("SortFile() = %v, want %v", result, tt.expected)
+            }
+        })
     }
-
-    t.Run("Without -u flag", func(t *testing.T) { 
-        sortedLines, err := SortFile(tmpFile.Name(), false)
-        if err != nil {
-            t.Fatal(err)
-        }
-
-        expected := []string{"APPLE", "APPLE", "BANANA", "BANANA", "CHERRY"}
-        if !reflect.DeepEqual(sortedLines, expected) {
-            t.Errorf("SortFile() = %v, want %v", sortedLines, expected)
-        }
-    })
-
-    t.Run("With -u flag", func(t *testing.T) {
-        sortedLines, err := SortFile(tmpFile.Name(), true)
-        if err != nil {
-            t.Fatal(err)
-        }
-
-        expected := []string{"APPLE", "BANANA", "CHERRY"}
-        if !reflect.DeepEqual(sortedLines, expected) {
-            t.Errorf("SortFile() = %v, want %v", sortedLines, expected)
-        }
-    })
-
 }
 
 func TestSortEmptyFile(t *testing.T) {
-    // Create an empty temporary file
-    tmpFile, err := os.CreateTemp("", "empty")
+    filename := "empty.txt"
+    err := ioutil.WriteFile(filename, []byte(""), 0644)
     if err != nil {
-        t.Fatal(err)
+        t.Fatalf("Failed to create empty file: %v", err)
     }
-    defer os.Remove(tmpFile.Name())
+    defer os.Remove(filename)
 
-    // Test the SortFile function with an empty file
-    sortedLines, err := SortFile(tmpFile.Name(), false)
+    result, err := SortFile(filename, false, "quick") // You can choose any default algorithm here
     if err != nil {
-        t.Fatal(err)
+        t.Fatalf("SortFile failed: %v", err)
     }
 
-    if len(sortedLines) != 0 {
-        t.Errorf("SortFile() on empty file should return empty slice, got %v", sortedLines)
+    if len(result) != 0 {
+        t.Errorf("Expected empty result, got %v", result)
+    }
+}
+
+func TestSortFileWithMergeSort(t *testing.T) {
+    content := "banana\napple\ncherry\ndate\n"
+    filename := "test_merge_sort.txt"
+    err := ioutil.WriteFile(filename, []byte(content), 0644)
+    if err != nil {
+        t.Fatalf("Failed to create test file: %v", err)
+    }
+    defer os.Remove(filename)
+
+    expected := []string{"APPLE", "BANANA", "CHERRY", "DATE"}
+    result, err := SortFile(filename, false, "merge")
+    if err != nil {
+        t.Fatalf("SortFile failed: %v", err)
+    }
+
+    if !reflect.DeepEqual(result, expected) {
+        t.Errorf("SortFile() with merge sort = %v, want %v", result, expected)
     }
 }
 
@@ -86,4 +106,46 @@ func TestSortFileWithQuickSort(t *testing.T) {
     if !reflect.DeepEqual(result, expected) {
         t.Errorf("SortFile() with quick sort = %v, want %v", result, expected)
     }
+}
+
+func TestSortFileWithHeapSort(t *testing.T) {
+    content := "banana\napple\ncherry\ndate\n"
+    filename := "test_heap_sort.txt"
+    err := ioutil.WriteFile(filename, []byte(content), 0644)
+    if err != nil {
+        t.Fatalf("Failed to create test file: %v", err)
+    }
+    defer os.Remove(filename)
+
+    expected := []string{"APPLE", "BANANA", "CHERRY", "DATE"}
+    result, err := SortFile(filename, false, "heap")
+    if err != nil {
+        t.Fatalf("SortFile failed: %v", err)
+    }
+
+    if !reflect.DeepEqual(result, expected) {
+        t.Errorf("SortFile() with heap sort = %v, want %v", result, expected)
+    }
+}
+
+func TestSortFileWithRadixSort(t *testing.T) {
+    content := "banana\napple\ncherry\ndate\n"
+    filename := "test_radix_sort.txt"
+    err := ioutil.WriteFile(filename, []byte(content), 0644)
+    if err != nil {
+        t.Fatalf("Failed to create test file: %v", err)
+    }
+    defer os.Remove(filename)
+
+    expected := []string{"APPLE", "BANANA", "CHERRY", "DATE"}
+    result, err := SortFile(filename, false, "radix")
+    if err != nil {
+        t.Fatalf("SortFile failed: %v", err)
+    }
+
+    if !reflect.DeepEqual(result, expected) {
+        t.Errorf("SortFile() with radix sort = %v, want %v", result, expected)
+    }
+
+
 }

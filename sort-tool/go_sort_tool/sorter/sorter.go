@@ -33,6 +33,10 @@ func SortFile(filename string, unique bool, algorithm string) ([]string, error) 
         algorithms.MergeSort(lines)
     case "quick":
         algorithms.QuickSort(lines)
+    case "heap":
+        algorithms.HeapSort(lines)
+    case "radix":
+        algorithms.RadixSort(lines)
     default:
         // for now, use MergeSort as default
         algorithms.QuickSort(lines)
